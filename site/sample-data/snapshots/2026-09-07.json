@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "date": "2026-09-07",
   "generatedAt": "2026-09-07T06:00:00.000Z",
   "sample": true,
@@ -18,8 +18,8 @@
       "id": "low-code",
       "name": "Low-code forms (pilot)",
       "files": 7,
-      "libraryInstances": 459,
-      "otherInstances": 1241,
+      "libraryInstances": 460,
+      "otherInstances": 1240,
       "boundValues": 1344,
       "rawValues": 4256
     },
@@ -45,39 +45,959 @@
   "components": [
     {
       "name": "Button",
-      "instances": 800
+      "instances": 800,
+      "restyled": 192,
+      "variants": [
+        {
+          "name": "Variant=Primary",
+          "instances": 384
+        },
+        {
+          "name": "Variant=Secondary",
+          "instances": 240
+        },
+        {
+          "name": "Variant=Ghost",
+          "instances": 128
+        },
+        {
+          "name": "Variant=Destructive",
+          "instances": 48
+        }
+      ],
+      "teams": [
+        {
+          "id": "web-app",
+          "instances": 256
+        },
+        {
+          "id": "low-code",
+          "instances": 127
+        },
+        {
+          "id": "marketing",
+          "instances": 364
+        },
+        {
+          "id": "internal",
+          "instances": 54
+        }
+      ],
+      "locations": [
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Live",
+          "instances": 182
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "Shipped",
+          "instances": 128
+        },
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Campaign drafts",
+          "instances": 109
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "In progress",
+          "instances": 77
+        },
+        {
+          "team": "marketing",
+          "file": "Brand refresh",
+          "page": "Archive",
+          "instances": 73
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Current",
+          "instances": 63
+        },
+        {
+          "team": "web-app",
+          "file": "Account area",
+          "page": "Old explorations",
+          "instances": 51
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Page 4",
+          "instances": 38
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Screens",
+          "instances": 27
+        },
+        {
+          "team": "low-code",
+          "file": "Policy forms",
+          "page": "Untitled",
+          "instances": 25
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Copy of Screens",
+          "instances": 16
+        },
+        {
+          "team": "internal",
+          "file": "Reports",
+          "page": "Page 1",
+          "instances": 11
+        }
+      ]
     },
     {
       "name": "Text field",
-      "instances": 532
+      "instances": 532,
+      "restyled": 53,
+      "variants": [
+        {
+          "name": "State=Default",
+          "instances": 372
+        },
+        {
+          "name": "State=With helper",
+          "instances": 106
+        },
+        {
+          "name": "State=Error",
+          "instances": 53
+        }
+      ],
+      "teams": [
+        {
+          "id": "web-app",
+          "instances": 170
+        },
+        {
+          "id": "low-code",
+          "instances": 84
+        },
+        {
+          "id": "marketing",
+          "instances": 242
+        },
+        {
+          "id": "internal",
+          "instances": 36
+        }
+      ],
+      "locations": [
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Live",
+          "instances": 121
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "Shipped",
+          "instances": 85
+        },
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Campaign drafts",
+          "instances": 73
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "In progress",
+          "instances": 51
+        },
+        {
+          "team": "marketing",
+          "file": "Brand refresh",
+          "page": "Archive",
+          "instances": 48
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Current",
+          "instances": 42
+        },
+        {
+          "team": "web-app",
+          "file": "Account area",
+          "page": "Old explorations",
+          "instances": 34
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Page 4",
+          "instances": 25
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Screens",
+          "instances": 18
+        },
+        {
+          "team": "low-code",
+          "file": "Policy forms",
+          "page": "Untitled",
+          "instances": 17
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Copy of Screens",
+          "instances": 11
+        },
+        {
+          "team": "internal",
+          "file": "Reports",
+          "page": "Page 1",
+          "instances": 7
+        }
+      ]
     },
     {
       "name": "Card",
-      "instances": 375
+      "instances": 375,
+      "restyled": 143,
+      "variants": [
+        {
+          "name": "Style=Outlined",
+          "instances": 233
+        },
+        {
+          "name": "Style=Elevated",
+          "instances": 143
+        }
+      ],
+      "teams": [
+        {
+          "id": "web-app",
+          "instances": 120
+        },
+        {
+          "id": "low-code",
+          "instances": 59
+        },
+        {
+          "id": "marketing",
+          "instances": 171
+        },
+        {
+          "id": "internal",
+          "instances": 25
+        }
+      ],
+      "locations": [
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Live",
+          "instances": 85
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "Shipped",
+          "instances": 60
+        },
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Campaign drafts",
+          "instances": 51
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "In progress",
+          "instances": 36
+        },
+        {
+          "team": "marketing",
+          "file": "Brand refresh",
+          "page": "Archive",
+          "instances": 34
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Current",
+          "instances": 30
+        },
+        {
+          "team": "web-app",
+          "file": "Account area",
+          "page": "Old explorations",
+          "instances": 24
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Page 4",
+          "instances": 18
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Screens",
+          "instances": 13
+        },
+        {
+          "team": "low-code",
+          "file": "Policy forms",
+          "page": "Untitled",
+          "instances": 12
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Copy of Screens",
+          "instances": 8
+        },
+        {
+          "team": "internal",
+          "file": "Reports",
+          "page": "Page 1",
+          "instances": 5
+        }
+      ]
     },
     {
       "name": "Select",
-      "instances": 285
+      "instances": 285,
+      "restyled": 34,
+      "variants": [
+        {
+          "name": "Size=Medium",
+          "instances": 228
+        },
+        {
+          "name": "Size=Small",
+          "instances": 57
+        }
+      ],
+      "teams": [
+        {
+          "id": "web-app",
+          "instances": 91
+        },
+        {
+          "id": "low-code",
+          "instances": 45
+        },
+        {
+          "id": "marketing",
+          "instances": 130
+        },
+        {
+          "id": "internal",
+          "instances": 19
+        }
+      ],
+      "locations": [
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Live",
+          "instances": 65
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "Shipped",
+          "instances": 46
+        },
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Campaign drafts",
+          "instances": 39
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "In progress",
+          "instances": 27
+        },
+        {
+          "team": "marketing",
+          "file": "Brand refresh",
+          "page": "Archive",
+          "instances": 26
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Current",
+          "instances": 23
+        },
+        {
+          "team": "web-app",
+          "file": "Account area",
+          "page": "Old explorations",
+          "instances": 18
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Page 4",
+          "instances": 14
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Screens",
+          "instances": 10
+        },
+        {
+          "team": "low-code",
+          "file": "Policy forms",
+          "page": "Untitled",
+          "instances": 9
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Copy of Screens",
+          "instances": 6
+        },
+        {
+          "team": "internal",
+          "file": "Reports",
+          "page": "Page 1",
+          "instances": 4
+        }
+      ]
     },
     {
       "name": "Checkbox",
-      "instances": 256
+      "instances": 256,
+      "restyled": 10,
+      "variants": [],
+      "teams": [
+        {
+          "id": "web-app",
+          "instances": 82
+        },
+        {
+          "id": "low-code",
+          "instances": 40
+        },
+        {
+          "id": "marketing",
+          "instances": 116
+        },
+        {
+          "id": "internal",
+          "instances": 17
+        }
+      ],
+      "locations": [
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Live",
+          "instances": 58
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "Shipped",
+          "instances": 41
+        },
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Campaign drafts",
+          "instances": 35
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "In progress",
+          "instances": 25
+        },
+        {
+          "team": "marketing",
+          "file": "Brand refresh",
+          "page": "Archive",
+          "instances": 23
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Current",
+          "instances": 20
+        },
+        {
+          "team": "web-app",
+          "file": "Account area",
+          "page": "Old explorations",
+          "instances": 16
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Page 4",
+          "instances": 12
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Screens",
+          "instances": 9
+        },
+        {
+          "team": "low-code",
+          "file": "Policy forms",
+          "page": "Untitled",
+          "instances": 8
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Copy of Screens",
+          "instances": 5
+        },
+        {
+          "team": "internal",
+          "file": "Reports",
+          "page": "Page 1",
+          "instances": 3
+        }
+      ]
     },
     {
       "name": "Modal",
-      "instances": 198
+      "instances": 198,
+      "restyled": 57,
+      "variants": [
+        {
+          "name": "Size=Medium",
+          "instances": 109
+        },
+        {
+          "name": "Size=Large",
+          "instances": 59
+        },
+        {
+          "name": "Size=Small",
+          "instances": 30
+        }
+      ],
+      "teams": [
+        {
+          "id": "web-app",
+          "instances": 63
+        },
+        {
+          "id": "low-code",
+          "instances": 31
+        },
+        {
+          "id": "marketing",
+          "instances": 90
+        },
+        {
+          "id": "internal",
+          "instances": 13
+        }
+      ],
+      "locations": [
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Live",
+          "instances": 45
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "Shipped",
+          "instances": 32
+        },
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Campaign drafts",
+          "instances": 27
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "In progress",
+          "instances": 19
+        },
+        {
+          "team": "marketing",
+          "file": "Brand refresh",
+          "page": "Archive",
+          "instances": 18
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Current",
+          "instances": 16
+        },
+        {
+          "team": "web-app",
+          "file": "Account area",
+          "page": "Old explorations",
+          "instances": 13
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Page 4",
+          "instances": 9
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Screens",
+          "instances": 7
+        },
+        {
+          "team": "low-code",
+          "file": "Policy forms",
+          "page": "Untitled",
+          "instances": 6
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Copy of Screens",
+          "instances": 4
+        },
+        {
+          "team": "internal",
+          "file": "Reports",
+          "page": "Page 1",
+          "instances": 3
+        }
+      ]
     },
     {
       "name": "Tabs",
-      "instances": 160
+      "instances": 160,
+      "restyled": 24,
+      "variants": [],
+      "teams": [
+        {
+          "id": "web-app",
+          "instances": 51
+        },
+        {
+          "id": "low-code",
+          "instances": 25
+        },
+        {
+          "id": "marketing",
+          "instances": 73
+        },
+        {
+          "id": "internal",
+          "instances": 11
+        }
+      ],
+      "locations": [
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Live",
+          "instances": 36
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "Shipped",
+          "instances": 26
+        },
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Campaign drafts",
+          "instances": 22
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "In progress",
+          "instances": 15
+        },
+        {
+          "team": "marketing",
+          "file": "Brand refresh",
+          "page": "Archive",
+          "instances": 15
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Current",
+          "instances": 13
+        },
+        {
+          "team": "web-app",
+          "file": "Account area",
+          "page": "Old explorations",
+          "instances": 10
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Page 4",
+          "instances": 8
+        },
+        {
+          "team": "low-code",
+          "file": "Policy forms",
+          "page": "Untitled",
+          "instances": 5
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Screens",
+          "instances": 5
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Copy of Screens",
+          "instances": 3
+        },
+        {
+          "team": "internal",
+          "file": "Reports",
+          "page": "Page 1",
+          "instances": 2
+        }
+      ]
     },
     {
       "name": "Banner",
-      "instances": 125
+      "instances": 125,
+      "restyled": 25,
+      "variants": [
+        {
+          "name": "Tone=Info",
+          "instances": 63
+        },
+        {
+          "name": "Tone=Warning",
+          "instances": 38
+        },
+        {
+          "name": "Tone=Success",
+          "instances": 25
+        }
+      ],
+      "teams": [
+        {
+          "id": "web-app",
+          "instances": 40
+        },
+        {
+          "id": "low-code",
+          "instances": 20
+        },
+        {
+          "id": "marketing",
+          "instances": 57
+        },
+        {
+          "id": "internal",
+          "instances": 8
+        }
+      ],
+      "locations": [
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Live",
+          "instances": 28
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "Shipped",
+          "instances": 20
+        },
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Campaign drafts",
+          "instances": 17
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "In progress",
+          "instances": 12
+        },
+        {
+          "team": "marketing",
+          "file": "Brand refresh",
+          "page": "Archive",
+          "instances": 11
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Current",
+          "instances": 10
+        },
+        {
+          "team": "web-app",
+          "file": "Account area",
+          "page": "Old explorations",
+          "instances": 8
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Page 4",
+          "instances": 6
+        },
+        {
+          "team": "low-code",
+          "file": "Policy forms",
+          "page": "Untitled",
+          "instances": 4
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Screens",
+          "instances": 4
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Copy of Screens",
+          "instances": 3
+        },
+        {
+          "team": "internal",
+          "file": "Reports",
+          "page": "Page 1",
+          "instances": 2
+        }
+      ]
     },
     {
       "name": "Tooltip",
-      "instances": 111
+      "instances": 111,
+      "restyled": 3,
+      "variants": [],
+      "teams": [
+        {
+          "id": "web-app",
+          "instances": 35
+        },
+        {
+          "id": "low-code",
+          "instances": 17
+        },
+        {
+          "id": "marketing",
+          "instances": 50
+        },
+        {
+          "id": "internal",
+          "instances": 7
+        }
+      ],
+      "locations": [
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Live",
+          "instances": 25
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "Shipped",
+          "instances": 18
+        },
+        {
+          "team": "marketing",
+          "file": "Landing pages",
+          "page": "Campaign drafts",
+          "instances": 15
+        },
+        {
+          "team": "web-app",
+          "file": "Checkout flows",
+          "page": "In progress",
+          "instances": 11
+        },
+        {
+          "team": "marketing",
+          "file": "Brand refresh",
+          "page": "Archive",
+          "instances": 10
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Current",
+          "instances": 9
+        },
+        {
+          "team": "web-app",
+          "file": "Account area",
+          "page": "Old explorations",
+          "instances": 7
+        },
+        {
+          "team": "low-code",
+          "file": "Claims intake",
+          "page": "Page 4",
+          "instances": 5
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Screens",
+          "instances": 4
+        },
+        {
+          "team": "low-code",
+          "file": "Policy forms",
+          "page": "Untitled",
+          "instances": 3
+        },
+        {
+          "team": "internal",
+          "file": "Admin console",
+          "page": "Copy of Screens",
+          "instances": 2
+        },
+        {
+          "team": "internal",
+          "file": "Reports",
+          "page": "Page 1",
+          "instances": 1
+        }
+      ]
     }
   ],
   "unusedComponents": [
@@ -92,6 +1012,116 @@
     },
     {
       "name": "Stepper"
+    }
+  ],
+  "pages": [
+    {
+      "team": "marketing",
+      "file": "Landing pages",
+      "page": "Live",
+      "libraryInstances": 661,
+      "otherInstances": 1034,
+      "boundValues": 2640,
+      "rawValues": 2860
+    },
+    {
+      "team": "internal",
+      "file": "Admin console",
+      "page": "Screens",
+      "libraryInstances": 98,
+      "otherInstances": 1127,
+      "boundValues": 756,
+      "rawValues": 2744
+    },
+    {
+      "team": "web-app",
+      "file": "Checkout flows",
+      "page": "Shipped",
+      "libraryInstances": 466,
+      "otherInstances": 759,
+      "boundValues": 1581,
+      "rawValues": 2669
+    },
+    {
+      "team": "low-code",
+      "file": "Claims intake",
+      "page": "Current",
+      "libraryInstances": 230,
+      "otherInstances": 620,
+      "boundValues": 806,
+      "rawValues": 1994
+    },
+    {
+      "team": "marketing",
+      "file": "Brand refresh",
+      "page": "Archive",
+      "libraryInstances": 264,
+      "otherInstances": 414,
+      "boundValues": 308,
+      "rawValues": 1892
+    },
+    {
+      "team": "marketing",
+      "file": "Landing pages",
+      "page": "Campaign drafts",
+      "libraryInstances": 397,
+      "otherInstances": 620,
+      "boundValues": 1452,
+      "rawValues": 1848
+    },
+    {
+      "team": "internal",
+      "file": "Admin console",
+      "page": "Copy of Screens",
+      "libraryInstances": 59,
+      "otherInstances": 676,
+      "boundValues": 416,
+      "rawValues": 1684
+    },
+    {
+      "team": "web-app",
+      "file": "Checkout flows",
+      "page": "In progress",
+      "libraryInstances": 279,
+      "otherInstances": 456,
+      "boundValues": 870,
+      "rawValues": 1680
+    },
+    {
+      "team": "web-app",
+      "file": "Account area",
+      "page": "Old explorations",
+      "libraryInstances": 186,
+      "otherInstances": 304,
+      "boundValues": 184,
+      "rawValues": 1516
+    },
+    {
+      "team": "internal",
+      "file": "Reports",
+      "page": "Page 1",
+      "libraryInstances": 39,
+      "otherInstances": 451,
+      "boundValues": 88,
+      "rawValues": 1312
+    },
+    {
+      "team": "low-code",
+      "file": "Claims intake",
+      "page": "Page 4",
+      "libraryInstances": 138,
+      "otherInstances": 372,
+      "boundValues": 444,
+      "rawValues": 1236
+    },
+    {
+      "team": "low-code",
+      "file": "Policy forms",
+      "page": "Untitled",
+      "libraryInstances": 92,
+      "otherInstances": 248,
+      "boundValues": 94,
+      "rawValues": 1026
     }
   ],
   "rawValues": [

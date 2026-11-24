@@ -11,6 +11,8 @@ It answers four questions, per team and over time:
 - Which published components are used most, and which are never used?
 - Which raw values keep recurring, and is there a token that already covers them?
 
+Each component also has a detail view: instances over time, which variants people reach for, how many instances carry a visual override, which teams use it, and the pages where it appears most.
+
 No server, database or MCP access is involved. A scheduled GitHub Actions job reads Figma's REST API, commits a small JSON snapshot, and redeploys a static page.
 
 ## How it works
@@ -37,6 +39,7 @@ Snapshots hold counts, component names and raw values such as `#1A4B8C` or `14px
    {
      "library": { "fileKey": "AbC123libraryFileKey" },
      "tokensFile": "tokens.json",
+     "ignorePages": ["archive", "scratch"],
      "teams": [
        {
          "id": "web-app",
@@ -58,7 +61,18 @@ Snapshots hold counts, component names and raw values such as `#1A4B8C` or `14px
 | `teams[].files[].key` | Yes | The Figma files to measure, grouped by team. |
 | `library.fileKey` | No | The design system's library file. With it, an instance counts as a library instance only when that file published its component, and unused components can be listed. Without it, any component from any library counts. |
 | `tokensFile` | No | Path to a token file in the [Design Tokens Community Group format](https://www.designtokens.org). With it, each recurring raw value is matched to its nearest token as exact, near or no match. |
+| `ignorePages` | No | Page names to skip, matched as case-insensitive substrings. Also accepted on a single file entry. |
 | `figmaTokenExpiresOn` | No | Same as the `FIGMA_TOKEN_EXPIRES_ON` variable, which takes precedence. |
+
+## Large and untidy files
+
+The collector never downloads a whole file in one request. It lists the pages first, then reads each page's top-level layers ten at a time, so file size affects how long a run takes and not whether it finishes.
+
+Untidy files are expected, and the dashboard is built to show where the mess is:
+
+- **Pages with the most raw values** ranks every page by hand-typed values, so cleanup can start where it pays off most.
+- **`ignorePages`** keeps archives, scratch pages and old explorations out of the numbers once a team agrees they should not count.
+- **Hidden layers are skipped**, so abandoned work that someone hid does not drag coverage down.
 
 ## Token rotation
 
@@ -74,6 +88,7 @@ Figma personal access tokens expire after at most 90 days, so the token is the o
 - **Bound value:** a solid fill or stroke, an auto-layout gap or padding, a corner radius, or a text size that references a variable or a style.
 - **Raw value:** the same properties holding a literal.
 - **Token coverage:** bound values divided by bound plus raw values.
+- **Restyled instance:** a library instance with an override on a visual property such as fill, stroke, radius, spacing or type. Text and visibility changes do not count.
 
 Values inside an instance are skipped, because they belong to the library component and not to the file's author. Hidden layers are skipped.
 
@@ -82,7 +97,8 @@ Values inside an instance are skipped, because they belong to the library compon
 - **Detached components are invisible.** Once detached they are plain frames. Figma's own library analytics reports detaches on plans that include it.
 - **Gradients, effects, mixed corner radii and line height are not counted yet.**
 - **The collector has been tested against fixtures shaped like Figma's file response, not yet against a live file.** Expect to adjust it on first contact with real data.
-- **Very large files** come back as one large response. If a file times out, split the list by page with the API's `ids` parameter.
+- **A single enormous top-level frame** is still read in one request. If one times out, split it in Figma or lower `NODES_PER_REQUEST` in `collector/figma.mjs`.
+- **Snapshots keep the top 50 components, 30 pages and 25 raw values**, not every one.
 
 ## Develop locally
 

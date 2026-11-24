@@ -2,8 +2,8 @@
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { emptySummary, mergeSummaries, summarizeFile } from './analyze.mjs';
-import { getFile, getLibraryComponents } from './figma.mjs';
+import { mergeSummaries, summarizeNodes } from './analyze.mjs';
+import { getLibraryComponents, listPages, readNodes } from './figma.mjs';
 import { buildSnapshot } from './snapshot.mjs';
 import { flattenTokens } from './tokens.mjs';
 
@@ -15,16 +15,41 @@ async function readJson(file) {
   return JSON.parse(await readFile(file, 'utf8'));
 }
 
+function isIgnored(pageName, patterns) {
+  const name = pageName.toLowerCase();
+  return patterns.some((pattern) => name.includes(pattern.toLowerCase()));
+}
+
+async function readFilePages(file, token, libraryKeys, ignorePatterns) {
+  const pages = [];
+  for (const page of await listPages(file.key, token)) {
+    if (isIgnored(page.name, ignorePatterns)) {
+      console.log(`  Skipped page "${page.name}"`);
+      continue;
+    }
+    const parts = [];
+    for await (const entry of readNodes(file.key, page.nodeIds, token)) {
+      parts.push(summarizeNodes([entry.document], {
+        components: entry.components,
+        componentSets: entry.componentSets,
+        libraryKeys,
+      }));
+    }
+    pages.push({ name: page.name, summary: mergeSummaries(parts, { sameFile: true }) });
+  }
+  return pages;
+}
+
 async function main() {
   const token = process.env.FIGMA_TOKEN;
   const config = await readJson(path.join(root, 'dashboard.config.json'));
-  const teams = (config.teams ?? []).filter((team) => team.files?.length);
+  const configuredTeams = (config.teams ?? []).filter((team) => team.files?.length);
 
   if (!token) {
     console.log('FIGMA_TOKEN is not set. Skipping collection; the dashboard keeps showing its current data.');
     return;
   }
-  if (!teams.length) {
+  if (!configuredTeams.length) {
     console.log('dashboard.config.json lists no team files. Skipping collection.');
     return;
   }
@@ -33,21 +58,23 @@ async function main() {
   const tokens = config.tokensFile ? flattenTokens(await readJson(path.resolve(root, config.tokensFile))) : null;
 
   const errors = [];
-  const teamSummaries = [];
+  const teams = [];
   let filesRead = 0;
-  for (const team of teams) {
-    const summaries = [];
+  for (const team of configuredTeams) {
+    const files = [];
     for (const file of team.files) {
+      const name = file.name ?? file.key;
+      console.log(`Reading ${team.name} / ${name}`);
       try {
-        summaries.push(summarizeFile(await getFile(file.key, token), library?.keys ?? null));
+        const ignorePatterns = [...(config.ignorePages ?? []), ...(file.ignorePages ?? [])];
+        files.push({ name, pages: await readFilePages(file, token, library?.keys ?? null, ignorePatterns) });
         filesRead += 1;
-        console.log(`Read ${team.name} / ${file.name ?? file.key}`);
       } catch (error) {
-        errors.push({ team: team.id, file: file.name ?? file.key, message: error.message });
-        console.error(`Failed ${team.name} / ${file.name ?? file.key}: ${error.message}`);
+        errors.push({ team: team.id, file: name, message: error.message });
+        console.error(`  Failed: ${error.message}`);
       }
     }
-    teamSummaries.push({ id: team.id, name: team.name, summary: summaries.length ? mergeSummaries(summaries) : emptySummary() });
+    teams.push({ id: team.id, name: team.name, files });
   }
 
   if (!filesRead) throw new Error('No file could be read, so no snapshot was written.');
@@ -55,7 +82,7 @@ async function main() {
   const date = new Date().toISOString().slice(0, 10);
   const snapshot = buildSnapshot({
     date,
-    teamSummaries,
+    teams,
     libraryNames: library?.names ?? null,
     tokens,
     tokenExpiresOn: process.env.FIGMA_TOKEN_EXPIRES_ON || config.figmaTokenExpiresOn,

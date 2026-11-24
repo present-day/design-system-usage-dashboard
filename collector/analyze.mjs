@@ -4,7 +4,18 @@ const PAINT_FIELDS = [
   ['fills', ['fill', 'fills']],
   ['strokes', ['stroke', 'strokes']],
 ];
+const RESTYLE_FIELDS = new Set([
+  'fills', 'strokes', 'strokeWeight', 'effects', 'cornerRadius', 'opacity',
+  'fontSize', 'fontName', 'lineHeight', 'letterSpacing',
+  'itemSpacing', 'paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom',
+  ...RADIUS_FIELDS,
+]);
 
+/**
+ * `components` maps a component name to `{ instances, restyled, variants }`, where
+ * `restyled` counts instances with at least one visual override and `variants` maps a
+ * variant name to its instance count. `raw` maps `kind|value` to `{ kind, value, uses, files }`.
+ */
 export function emptySummary() {
   return {
     files: 0,
@@ -18,23 +29,34 @@ export function emptySummary() {
 }
 
 /**
- * Counts component and value usage in one Figma file response (`GET /v1/files/:key`).
- * `libraryKeys` is the set of published component keys in the design system library;
- * pass null to treat every remote component as a library component.
+ * Counts usage under the given nodes. `context` carries the `components` and
+ * `componentSets` maps from the same Figma response, plus `libraryKeys`: the set of
+ * component keys the design system library publishes, or null to treat every remote
+ * component as a library component.
  */
-export function summarizeFile(file, libraryKeys = null) {
+export function summarizeNodes(nodes, { components = {}, componentSets = {}, libraryKeys = null }) {
   const summary = emptySummary();
-  summary.files = 1;
-  const context = {
-    components: file.components ?? {},
-    componentSets: file.componentSets ?? {},
-    libraryKeys,
-  };
-  walk(file.document, context, summary);
+  const context = { components, componentSets, libraryKeys };
+  for (const node of nodes) walk(node, context, summary);
   return summary;
 }
 
-export function mergeSummaries(summaries) {
+/** Counts usage in a whole-file response (`GET /v1/files/:key`). */
+export function summarizeFile(file, libraryKeys = null) {
+  const summary = summarizeNodes([file.document], {
+    components: file.components,
+    componentSets: file.componentSets,
+    libraryKeys,
+  });
+  summary.files = 1;
+  return summary;
+}
+
+/**
+ * Adds summaries together. `raw[].files` is summed, so merge the parts of one file with
+ * `sameFile: true` to keep it meaning "number of files this value appears in".
+ */
+export function mergeSummaries(summaries, { sameFile = false } = {}) {
   const merged = emptySummary();
   for (const summary of summaries) {
     merged.files += summary.files;
@@ -42,14 +64,20 @@ export function mergeSummaries(summaries) {
     merged.otherInstances += summary.otherInstances;
     merged.boundValues += summary.boundValues;
     merged.rawValues += summary.rawValues;
-    for (const [name, count] of summary.components) {
-      merged.components.set(name, (merged.components.get(name) ?? 0) + count);
+    for (const [name, component] of summary.components) {
+      const target = merged.components.get(name) ?? { instances: 0, restyled: 0, variants: new Map() };
+      target.instances += component.instances;
+      target.restyled += component.restyled;
+      for (const [variant, count] of component.variants) {
+        target.variants.set(variant, (target.variants.get(variant) ?? 0) + count);
+      }
+      merged.components.set(name, target);
     }
     for (const [key, entry] of summary.raw) {
       const existing = merged.raw.get(key);
       if (existing) {
         existing.uses += entry.uses;
-        existing.files += entry.files;
+        if (!sameFile) existing.files += entry.files;
       } else {
         merged.raw.set(key, { ...entry });
       }
@@ -87,9 +115,19 @@ function countInstance(node, context, summary) {
     return;
   }
   summary.libraryInstances += 1;
+
   const setName = meta.componentSetId ? context.componentSets[meta.componentSetId]?.name : null;
   const name = setName ?? meta.name;
-  summary.components.set(name, (summary.components.get(name) ?? 0) + 1);
+  const component = summary.components.get(name) ?? { instances: 0, restyled: 0, variants: new Map() };
+  component.instances += 1;
+  if (isRestyled(node)) component.restyled += 1;
+  if (setName) component.variants.set(meta.name, (component.variants.get(meta.name) ?? 0) + 1);
+  summary.components.set(name, component);
+}
+
+function isRestyled(instance) {
+  return (instance.overrides ?? []).some((override) =>
+    (override.overriddenFields ?? []).some((field) => RESTYLE_FIELDS.has(field)));
 }
 
 function countValues(node, summary) {

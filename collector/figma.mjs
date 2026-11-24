@@ -1,5 +1,6 @@
 const API = 'https://api.figma.com/v1';
 const MAX_ATTEMPTS = 4;
+const NODES_PER_REQUEST = 10;
 
 export async function figmaGet(path, token) {
   for (let attempt = 1; ; attempt += 1) {
@@ -16,8 +17,31 @@ export async function figmaGet(path, token) {
   }
 }
 
-export function getFile(fileKey, token) {
-  return figmaGet(`/files/${fileKey}`, token);
+/**
+ * Lists a file's pages without downloading their contents.
+ * Returns `[{ id, name, nodeIds }]`, where `nodeIds` are the page's top-level layers.
+ */
+export async function listPages(fileKey, token) {
+  const file = await figmaGet(`/files/${fileKey}?depth=2`, token);
+  return (file.document?.children ?? []).map((page) => ({
+    id: page.id,
+    name: page.name,
+    nodeIds: (page.children ?? []).map((child) => child.id),
+  }));
+}
+
+/**
+ * Yields a page's top-level layers a few at a time, so a very large file never has to
+ * arrive as one response. Each item is `{ document, components, componentSets }`.
+ */
+export async function* readNodes(fileKey, nodeIds, token) {
+  for (let start = 0; start < nodeIds.length; start += NODES_PER_REQUEST) {
+    const ids = nodeIds.slice(start, start + NODES_PER_REQUEST).join(',');
+    const response = await figmaGet(`/files/${fileKey}/nodes?ids=${encodeURIComponent(ids)}`, token);
+    for (const entry of Object.values(response.nodes ?? {})) {
+      if (entry) yield entry;
+    }
+  }
 }
 
 /**

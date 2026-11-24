@@ -1,58 +1,69 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mergeSummaries, summarizeFile, toHex } from '../collector/analyze.mjs';
+import { mergeSummaries, summarizeFile, summarizeNodes, toHex } from '../collector/analyze.mjs';
 import { buildSnapshot } from '../collector/snapshot.mjs';
 import { flattenTokens, matchRawValue } from '../collector/tokens.mjs';
 
 const solid = (r, g, b, extra = {}) => ({ type: 'SOLID', color: { r, g, b, a: 1 }, ...extra });
 
-const file = {
-  components: {
-    '1:1': { key: 'lib-button-primary', name: 'Variant=Primary', remote: true, componentSetId: '1:0' },
-    '2:1': { key: 'lib-card', name: 'Card', remote: true },
-    '3:1': { key: 'local-thing', name: 'Local thing', remote: false },
-    '4:1': { key: 'other-lib-icon', name: 'Icon', remote: true },
-  },
-  componentSets: { '1:0': { key: 'lib-button', name: 'Button' } },
-  document: {
-    type: 'DOCUMENT',
-    children: [{
-      type: 'CANVAS',
-      children: [
-        {
-          type: 'FRAME',
-          layoutMode: 'VERTICAL',
-          itemSpacing: 14,
-          paddingLeft: 16,
-          paddingRight: 16,
-          paddingTop: 0,
-          paddingBottom: 0,
-          boundVariables: { paddingLeft: { type: 'VARIABLE_ALIAS', id: 'v1' } },
-          cornerRadius: 6,
-          fills: [solid(1, 1, 1, { boundVariables: { color: { type: 'VARIABLE_ALIAS', id: 'v2' } } })],
-          strokes: [solid(0.102, 0.294, 0.549)],
-          children: [
-            { type: 'INSTANCE', componentId: '1:1', fills: [solid(1, 0, 0)], children: [{ type: 'TEXT', style: { fontSize: 99 } }] },
-            { type: 'INSTANCE', componentId: '1:1' },
-            { type: 'INSTANCE', componentId: '2:1' },
-            { type: 'INSTANCE', componentId: '3:1' },
-            { type: 'INSTANCE', componentId: '4:1' },
-            { type: 'TEXT', style: { fontSize: 15 }, fills: [solid(0, 0, 0)], styles: { fill: 'S:1' } },
-            { type: 'TEXT', style: { fontSize: 16 }, styles: { text: 'S:2' }, fills: [] },
-            { type: 'RECTANGLE', visible: false, fills: [solid(0, 1, 0)] },
-          ],
-        },
-      ],
-    }],
-  },
+const components = {
+  '1:1': { key: 'lib-button-primary', name: 'Variant=Primary', remote: true, componentSetId: '1:0' },
+  '1:2': { key: 'lib-button-ghost', name: 'Variant=Ghost', remote: true, componentSetId: '1:0' },
+  '2:1': { key: 'lib-card', name: 'Card', remote: true },
+  '3:1': { key: 'local-thing', name: 'Local thing', remote: false },
+  '4:1': { key: 'other-lib-icon', name: 'Icon', remote: true },
 };
-const libraryKeys = new Set(['lib-button-primary', 'lib-card']);
+const componentSets = { '1:0': { key: 'lib-button', name: 'Button' } };
+const frame = {
+  type: 'FRAME',
+  layoutMode: 'VERTICAL',
+  itemSpacing: 14,
+  paddingLeft: 16,
+  paddingRight: 16,
+  paddingTop: 0,
+  paddingBottom: 0,
+  boundVariables: { paddingLeft: { type: 'VARIABLE_ALIAS', id: 'v1' } },
+  cornerRadius: 6,
+  fills: [solid(1, 1, 1, { boundVariables: { color: { type: 'VARIABLE_ALIAS', id: 'v2' } } })],
+  strokes: [solid(0.102, 0.294, 0.549)],
+  children: [
+    {
+      type: 'INSTANCE',
+      componentId: '1:1',
+      fills: [solid(1, 0, 0)],
+      overrides: [{ id: 'I1', overriddenFields: ['fills', 'characters'] }],
+      children: [{ type: 'TEXT', style: { fontSize: 99 } }],
+    },
+    { type: 'INSTANCE', componentId: '1:2', overrides: [{ id: 'I2', overriddenFields: ['characters'] }] },
+    { type: 'INSTANCE', componentId: '2:1' },
+    { type: 'INSTANCE', componentId: '3:1' },
+    { type: 'INSTANCE', componentId: '4:1' },
+    { type: 'TEXT', style: { fontSize: 15 }, fills: [solid(0, 0, 0)], styles: { fill: 'S:1' } },
+    { type: 'TEXT', style: { fontSize: 16 }, styles: { text: 'S:2' }, fills: [] },
+    { type: 'RECTANGLE', visible: false, fills: [solid(0, 1, 0)] },
+  ],
+};
+const file = {
+  components,
+  componentSets,
+  document: { type: 'DOCUMENT', children: [{ type: 'CANVAS', children: [frame] }] },
+};
+const libraryKeys = new Set(['lib-button-primary', 'lib-button-ghost', 'lib-card']);
+const plain = (summary) => [...summary.components].map(([name, component]) => [name, component.instances]);
 
 test('counts library instances by published key and groups variants under the set name', () => {
   const summary = summarizeFile(file, libraryKeys);
   assert.equal(summary.libraryInstances, 3);
   assert.equal(summary.otherInstances, 2);
-  assert.deepEqual([...summary.components], [['Button', 2], ['Card', 1]]);
+  assert.deepEqual(plain(summary), [['Button', 2], ['Card', 1]]);
+  assert.deepEqual([...summary.components.get('Button').variants], [['Variant=Primary', 1], ['Variant=Ghost', 1]]);
+  assert.equal(summary.components.get('Card').variants.size, 0);
+});
+
+test('counts an instance as restyled only for visual overrides, not text changes', () => {
+  const summary = summarizeFile(file, libraryKeys);
+  assert.equal(summary.components.get('Button').restyled, 1);
+  assert.equal(summary.components.get('Card').restyled, 0);
 });
 
 test('falls back to the remote flag when no library is configured', () => {
@@ -73,10 +84,18 @@ test('separates bound values from raw ones and ignores instance internals and hi
   );
 });
 
-test('merging adds counts and tracks how many files a raw value appears in', () => {
+test('summarizing a file in parts gives the same counts as summarizing it whole', () => {
+  const context = { components, componentSets, libraryKeys };
+  const parts = [summarizeNodes([frame], context), summarizeNodes([frame], context)];
+  const merged = mergeSummaries(parts, { sameFile: true });
+  assert.equal(merged.libraryInstances, 6);
+  assert.equal(merged.components.get('Button').variants.get('Variant=Primary'), 2);
+  assert.deepEqual(merged.raw.get('Spacing|14px'), { kind: 'Spacing', value: '14px', uses: 2, files: 1 });
+});
+
+test('merging separate files tracks how many files a raw value appears in', () => {
   const merged = mergeSummaries([summarizeFile(file, libraryKeys), summarizeFile(file, libraryKeys)]);
   assert.equal(merged.files, 2);
-  assert.equal(merged.libraryInstances, 6);
   assert.deepEqual(merged.raw.get('Spacing|14px'), { kind: 'Spacing', value: '14px', uses: 2, files: 2 });
 });
 
@@ -111,17 +130,35 @@ test('matches raw values to exact, near or no token', () => {
   assert.equal(matchRawValue({ kind: 'Spacing', value: '40px' }, tokens).match, 'none');
 });
 
-test('builds a snapshot with unused components and matched raw values', () => {
+test('builds a snapshot with per-page rows, component detail and unused components', () => {
+  const context = { components, componentSets, libraryKeys };
+  const page = (name) => ({ name, summary: summarizeNodes([frame], context) });
   const snapshot = buildSnapshot({
     date: '2026-01-01',
-    teamSummaries: [{ id: 'a', name: 'Team A', summary: summarizeFile(file, libraryKeys) }],
+    teams: [
+      { id: 'a', name: 'Team A', files: [{ name: 'Flows', pages: [page('Shipped'), page('Scratch')] }] },
+      { id: 'b', name: 'Team B', files: [{ name: 'Forms', pages: [page('Main')] }] },
+    ],
     libraryNames: new Set(['Button', 'Card', 'Stepper']),
     tokens,
     tokenExpiresOn: '2026-03-01',
   });
+
   assert.deepEqual(snapshot.teams[0], {
-    id: 'a', name: 'Team A', files: 1, libraryInstances: 3, otherInstances: 2, boundValues: 4, rawValues: 5,
+    id: 'a', name: 'Team A', files: 1, libraryInstances: 6, otherInstances: 4, boundValues: 8, rawValues: 10,
   });
+  assert.equal(snapshot.pages.length, 3);
+  assert.deepEqual(snapshot.pages[0], {
+    team: 'a', file: 'Flows', page: 'Shipped', libraryInstances: 3, otherInstances: 2, boundValues: 4, rawValues: 5,
+  });
+
+  const button = snapshot.components.find((component) => component.name === 'Button');
+  assert.equal(button.instances, 6);
+  assert.equal(button.restyled, 3);
+  assert.deepEqual(button.teams, [{ id: 'a', instances: 4 }, { id: 'b', instances: 2 }]);
+  assert.equal(button.locations.length, 3);
+  assert.deepEqual(button.variants, [{ name: 'Variant=Primary', instances: 3 }, { name: 'Variant=Ghost', instances: 3 }]);
+
   assert.deepEqual(snapshot.unusedComponents, [{ name: 'Stepper' }]);
-  assert.equal(snapshot.rawValues.find((raw) => raw.value === '#1A4B8C').nearestToken, 'color.blue.700');
+  assert.equal(snapshot.rawValues.find((raw) => raw.value === '#1A4B8C').files, 2);
 });
