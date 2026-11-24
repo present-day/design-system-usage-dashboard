@@ -1,0 +1,17 @@
+{
+  "name": "design-system-usage-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Measures how much of a Figma file comes from your design system, and publishes the trend as a static dashboard.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "collect": "node collector/collect.mjs",
+    "sample": "node scripts/generate-sample.mjs",
+    "test": "node --test",
+    "serve": "python3 -m http.server 4173 --directory site"
+  }
+}

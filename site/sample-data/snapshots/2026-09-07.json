@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-07",
+  "generatedAt": "2026-09-07T06:00:00.000Z",
+  "sample": true,
+  "tokenExpiresOn": "2026-12-09",
+  "teams": [
+    {
+      "id": "web-app",
+      "name": "Web app (pilot)",
+      "files": 9,
+      "libraryInstances": 931,
+      "otherInstances": 1519,
+      "boundValues": 2635,
+      "rawValues": 5865
+    },
+    {
+      "id": "low-code",
+      "name": "Low-code forms (pilot)",
+      "files": 7,
+      "libraryInstances": 459,
+      "otherInstances": 1241,
+      "boundValues": 1344,
+      "rawValues": 4256
+    },
+    {
+      "id": "marketing",
+      "name": "Marketing site",
+      "files": 12,
+      "libraryInstances": 1322,
+      "otherInstances": 2068,
+      "boundValues": 4400,
+      "rawValues": 6600
+    },
+    {
+      "id": "internal",
+      "name": "Internal tools",
+      "files": 9,
+      "libraryInstances": 196,
+      "otherInstances": 2254,
+      "boundValues": 1260,
+      "rawValues": 5740
+    }
+  ],
+  "components": [
+    {
+      "name": "Button",
+      "instances": 800
+    },
+    {
+      "name": "Text field",
+      "instances": 532
+    },
+    {
+      "name": "Card",
+      "instances": 375
+    },
+    {
+      "name": "Select",
+      "instances": 285
+    },
+    {
+      "name": "Checkbox",
+      "instances": 256
+    },
+    {
+      "name": "Modal",
+      "instances": 198
+    },
+    {
+      "name": "Tabs",
+      "instances": 160
+    },
+    {
+      "name": "Banner",
+      "instances": 125
+    },
+    {
+      "name": "Tooltip",
+      "instances": 111
+    }
+  ],
+  "unusedComponents": [
+    {
+      "name": "Breadcrumb"
+    },
+    {
+      "name": "Data table"
+    },
+    {
+      "name": "Date range picker"
+    },
+    {
+      "name": "Stepper"
+    }
+  ],
+  "rawValues": [
+    {
+      "kind": "Color",
+      "value": "#1A4B8C",
+      "files": 23,
+      "nearestToken": "color.action.primary",
+      "match": "near",
+      "uses": 557
+    },
+    {
+      "kind": "Color",
+      "value": "#F4F5F7",
+      "files": 19,
+      "nearestToken": "color.surface.subtle",
+      "match": "exact",
+      "uses": 494
+    },
+    {
+      "kind": "Spacing",
+      "value": "14px",
+      "files": 21,
+      "nearestToken": null,
+      "match": "none",
+      "uses": 402
+    },
+    {
+      "kind": "Radius",
+      "value": "6px",
+      "files": 17,
+      "nearestToken": "radius.md",
+      "match": "near",
+      "uses": 326
+    },
+    {
+      "kind": "Font size",
+      "value": "15px",
+      "files": 12,
+      "nearestToken": null,
+      "match": "none",
+      "uses": 254
+    },
+    {
+      "kind": "Color",
+      "value": "#D92D20",
+      "files": 9,
+      "nearestToken": "color.status.error",
+      "match": "near",
+      "uses": 180
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design System Usage</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #6f6d68;
+    --grid: #e1e0d9; --axis: #c3c2b7;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+    --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+    --meter: #256abf; --up: #006300; --warn: #fab219; --warn-bg: #fdf3d9; --note-bg: #eef1f6;
+    --body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #a09e97;
+      --grid: #2c2c2a; --axis: #383835;
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+      --s5: #d55181; --s6: #0ca30c; --s7: #9085e9; --s8: #e66767;
+      --meter: #5598e7; --up: #0ca30c; --warn-bg: #2e2610; --note-bg: #1c222c;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink);
+    font-family: var(--body); font-size: 15px; line-height: 1.5;
+    padding: 28px 16px 64px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  h1, h2, p { margin: 0; }
+  h1 { font-size: clamp(26px, 3.6vw, 36px); line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+  h2 { font-size: 17px; font-weight: 600; }
+  [hidden] { display: none !important; }
+
+  .head { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between; }
+  .asof { color: var(--ink2); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .strip { display: flex; flex-direction: column; gap: 8px; }
+  .strip:empty { display: none; }
+  .notice { padding: 10px 14px; font-size: 14px; background: var(--note-bg); border-left: 3px solid var(--meter); }
+  .notice.warn { background: var(--warn-bg); border-left-color: var(--warn); }
+  .notice b { font-weight: 600; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--grid); padding: 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .tile .label { font-size: 13px; color: var(--ink2); }
+  .tile .value { font-size: 34px; line-height: 1.1; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .tile .delta { font-size: 13px; color: var(--ink2); }
+  .tile .delta .up { color: var(--up); font-weight: 600; }
+
+  .panel { background: var(--surface); border: 1px solid var(--grid); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .panel-head { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; align-items: baseline; }
+  .panel-head p, .empty { color: var(--ink2); font-size: 13px; }
+  .toggle {
+    font: inherit; font-size: 13px; color: var(--ink); background: transparent;
+    border: 1px solid var(--axis); padding: 6px 12px; cursor: pointer; min-height: 34px;
+  }
+  .toggle:hover { border-color: var(--ink2); }
+  .toggle:focus-visible { outline: 2px solid var(--meter); outline-offset: 2px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink2); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .chip { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+  .chart { position: relative; width: 100%; }
+  .chart svg { display: block; width: 100%; }
+  .chart text { font-family: var(--body); font-size: 12px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .chart text.end { fill: var(--ink); font-weight: 500; }
+  .tip {
+    position: absolute; top: 8px; left: 0; pointer-events: none; min-width: 190px;
+    background: var(--surface); border: 1px solid var(--axis); padding: 8px 10px; font-size: 13px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+  }
+  .tip .t { color: var(--ink2); margin-bottom: 4px; }
+  .tip .r { display: flex; align-items: center; gap: 6px; }
+  .tip .r b { margin-left: auto; padding-left: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  th { font-weight: 500; color: var(--ink2); font-size: 13px; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: 0; }
+  td .name { display: inline-flex; align-items: center; gap: 8px; }
+  .meter { display: inline-flex; align-items: center; gap: 10px; }
+  .meter .track { display: block; width: 110px; height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; }
+  .meter .fill { display: block; height: 100%; background: var(--meter); border-radius: 4px; }
+  .meter b { font-weight: 600; font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; }
+  code { font-family: var(--mono); font-size: 13px; }
+  .sw { display: inline-block; width: 12px; height: 12px; border: 1px solid var(--axis); vertical-align: -1px; margin-right: 6px; }
+  .tag { font-size: 12px; border: 1px solid var(--axis); padding: 1px 7px; color: var(--ink2); }
+
+  .two { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; }
+  .bars { display: flex; flex-direction: column; gap: 9px; }
+  .bar { display: grid; grid-template-columns: 120px minmax(0, 1fr) 56px; gap: 10px; align-items: center; font-size: 14px; }
+  .bar .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar .track { display: block; height: 12px; }
+  .bar .fill { display: block; height: 100%; background: var(--meter); border-radius: 0 4px 4px 0; min-width: 2px; }
+  .bar .v { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink2); }
+  ul.unused { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+  ul.unused li { border-bottom: 1px solid var(--grid); padding-bottom: 8px; }
+  ul.unused li:last-child { border-bottom: 0; }
+  .foot { color: var(--ink2); font-size: 13px; max-width: 75ch; display: flex; flex-direction: column; gap: 6px; }
+  .foot a { color: inherit; }
+
+  @media (max-width: 760px) {
+    .two { grid-template-columns: minmax(0, 1fr); }
+    .tile .value { font-size: 28px; }
+    .bar { grid-template-columns: 92px minmax(0, 1fr) 48px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <h1>Design System Usage</h1>
+    <p class="asof" id="asof">Loading</p>
+  </header>
+
+  <div class="strip" id="strip"></div>
+
+  <div id="content" hidden>
+    <div class="wrap">
+      <div class="tiles" id="tiles"></div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 id="trend-title">Token coverage by team</h2>
+            <p>Share of color, spacing, radius and type values bound to a variable or style</p>
+          </div>
+          <button type="button" class="toggle" id="view-toggle" aria-pressed="false">Show as table</button>
+        </div>
+        <div class="legend" id="legend"></div>
+        <div class="chart" id="chart"></div>
+        <div class="scroll" id="trend-table" hidden></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Teams in the latest snapshot</h2>
+            <p>Counted across every Figma file each team has registered</p>
+          </div>
+        </div>
+        <div class="scroll" id="team-table"></div>
+      </section>
+
+      <div class="two">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Most-used library components</h2>
+              <p>Instances across all measured files</p>
+            </div>
+          </div>
+          <div class="bars" id="bars"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Published but never used</h2>
+              <p>Zero instances in any measured file</p>
+            </div>
+          </div>
+          <ul class="unused" id="unused"></ul>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Most common raw values</h2>
+            <p>Typed in by hand instead of bound to a token. A value with no match is a candidate for a new token.</p>
+          </div>
+        </div>
+        <div class="scroll" id="raw-table"></div>
+      </section>
+
+      <div class="foot">
+        <p><b>How it is counted.</b> A scheduled job reads each registered file through Figma's REST API. An instance counts as a library instance when its main component is published by the design system library. A value counts as bound when the node references a variable or style, and as raw when it holds a literal. Values inside an instance are not counted, since they belong to the library.</p>
+        <p><b>What it cannot see.</b> A detached component becomes a plain frame, so detaches are not counted here.</p>
+        <p id="token-line"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(async function () {
+  var MAX_SNAPSHOTS = 12, MAX_SERIES = 8, EXPIRY_WARNING_DAYS = 21, DAY = 86400000;
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var MATCH_LABELS = { exact: 'Exact match', near: 'Near match', none: 'No match', unchecked: 'Not checked' };
+
+  var el = function (id) { return document.getElementById(id); };
+  var fmt = function (n) { return n.toLocaleString('en-US'); };
+  var esc = function (text) {
+    return String(text).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+  var shortDate = function (iso) {
+    var parts = iso.split('-').map(Number);
+    return MONTHS[parts[1] - 1] + ' ' + parts[2];
+  };
+  var longDate = function (iso) { return shortDate(iso) + ', ' + iso.slice(0, 4); };
+  var coverage = function (team) {
+    var total = team.boundValues + team.rawValues;
+    return total ? Math.round(team.boundValues / total * 100) : null;
+  };
+  var totals = function (snapshot) {
+    return snapshot.teams.reduce(function (sum, team) {
+      sum.bound += team.boundValues; sum.raw += team.rawValues;
+      sum.library += team.libraryInstances; sum.other += team.otherInstances; sum.files += team.files;
+      return sum;
+    }, { bound: 0, raw: 0, library: 0, other: 0, files: 0 });
+  };
+
+  async function loadSet(base) {
+    try {
+      var index = await (await fetch(base + '/index.json')).json();
+      var names = (index.snapshots || []).slice(-MAX_SNAPSHOTS);
+      if (!names.length) return null;
+      return await Promise.all(names.map(async function (name) {
+        return (await fetch(base + '/snapshots/' + name)).json();
+      }));
+    } catch (error) {
+      return null;
+    }
+  }
+
+  var snaps = (await loadSet('data')) || (await loadSet('sample-data'));
+  if (!snaps) {
+    el('asof').textContent = 'No data';
+    el('strip').innerHTML = '<div class="notice warn"><b>No snapshots could be loaded.</b> If you opened this file directly, serve the site folder over HTTP instead: <code>npm run serve</code>.</div>';
+    return;
+  }
+
+  var latest = snaps[snaps.length - 1], N = snaps.length;
+  var teams = latest.teams.map(function (team, i) {
+    return Object.assign({}, team, {
+      color: i < MAX_SERIES ? 'var(--s' + (i + 1) + ')' : 'var(--muted)',
+      trend: snaps.map(function (snapshot) {
+        var match = snapshot.teams.find(function (other) { return other.id === team.id; });
+        return match ? coverage(match) : null;
+      })
+    });
+  });
+  var charted = teams.slice(0, MAX_SERIES);
+  var dates = snaps.map(function (snapshot) { return snapshot.date; });
+
+  el('asof').innerHTML = 'Data as of <b>' + longDate(latest.date) + '</b>';
+
+  var notices = [];
+  if (latest.sample) {
+    notices.push('<div class="notice"><b>Sample data.</b> The teams, components and numbers are invented to show what the dashboard reports. Add a Figma token and file keys to replace them with real measurements.</div>');
+  }
+  if (latest.errors && latest.errors.length) {
+    notices.push('<div class="notice warn"><b>Warning: ' + latest.errors.length + ' file(s) could not be read in the latest run.</b> ' +
+      esc(latest.errors.map(function (error) { return error.file; }).join(', ')) + '</div>');
+  }
+  if (latest.tokenExpiresOn) {
+    var reference = latest.sample ? Date.parse(latest.date) : Date.now();
+    var daysLeft = Math.ceil((Date.parse(latest.tokenExpiresOn) - reference) / DAY);
+    if (daysLeft <= 0) {
+      notices.push('<div class="notice warn"><b>Warning: the Figma access token expired on ' + longDate(latest.tokenExpiresOn) + '.</b> Replace it or these numbers stay as they are.</div>');
+    } else if (daysLeft <= EXPIRY_WARNING_DAYS) {
+      notices.push('<div class="notice warn"><b>Warning: the Figma access token expires ' + longDate(latest.tokenExpiresOn) + '</b>, in ' + daysLeft + ' days. Rotate it before then or the scheduled run stops and these numbers go stale.</div>');
+    } else {
+      el('token-line').innerHTML = '<b>Access token.</b> Expires ' + longDate(latest.tokenExpiresOn) + '.';
+    }
+  }
+  el('strip').innerHTML = notices.join('');
+
+  var now = totals(latest), then = totals(snaps[0]);
+  var coverageNow = now.bound + now.raw ? Math.round(now.bound / (now.bound + now.raw) * 100) : 0;
+  var coverageThen = then.bound + then.raw ? Math.round(then.bound / (then.bound + then.raw) * 100) : 0;
+  var change = coverageNow - coverageThen;
+  var changeText = N < 2 ? 'First snapshot'
+    : change > 0 ? '<span class="up">▲ ' + change + ' points</span> since ' + shortDate(dates[0])
+    : change < 0 ? '▼ ' + Math.abs(change) + ' points since ' + shortDate(dates[0])
+    : 'No change since ' + shortDate(dates[0]);
+  var instances = now.library + now.other;
+  el('tiles').innerHTML = [
+    ['Token coverage, all teams', coverageNow + '%', changeText],
+    ['Instances from the library', (instances ? Math.round(now.library / instances * 100) : 0) + '%', fmt(now.library) + ' of ' + fmt(instances) + ' instances'],
+    ['Raw values still in files', fmt(now.raw), 'out of ' + fmt(now.bound + now.raw) + ' values counted'],
+    ['Files measured', String(now.files), 'across ' + teams.length + ' team' + (teams.length === 1 ? '' : 's')]
+  ].map(function (tile) {
+    return '<div class="tile"><span class="label">' + tile[0] + '</span><span class="value">' + tile[1] + '</span><span class="delta">' + tile[2] + '</span></div>';
+  }).join('');
+
+  el('trend-title').textContent = 'Token coverage by team, last ' + N + ' snapshot' + (N === 1 ? '' : 's');
+  el('legend').innerHTML = charted.map(function (team) {
+    return '<span><i class="chip" style="background:' + team.color + '"></i>' + esc(team.name) + '</span>';
+  }).join('') + (teams.length > MAX_SERIES ? '<span>' + (teams.length - MAX_SERIES) + ' more in the table below</span>' : '');
+
+  var chart = el('chart');
+  function draw() {
+    var w = chart.clientWidth || 600, narrow = w < 520;
+    var directLabels = charted.length <= 4;
+    var h = narrow ? 250 : 320;
+    var m = { t: 14, r: directLabels ? 52 : 14, b: 28, l: 38 };
+    var pw = w - m.l - m.r, ph = h - m.t - m.b;
+    var x = function (i) { return N === 1 ? m.l + pw / 2 : m.l + i * pw / (N - 1); };
+    var y = function (v) { return m.t + ph * (1 - v / 100); };
+    var s = '<svg viewBox="0 0 ' + w + ' ' + h + '" height="' + h + '" role="img" aria-label="Line chart of token coverage by team. Use Show as table for the values.">';
+    [0, 25, 50, 75, 100].forEach(function (g) {
+      s += '<line x1="' + m.l + '" x2="' + (m.l + pw) + '" y1="' + y(g) + '" y2="' + y(g) + '" style="stroke:var(--' + (g === 0 ? 'axis' : 'grid') + ')" stroke-width="1"/>';
+      s += '<text x="' + (m.l - 8) + '" y="' + (y(g) + 4) + '" text-anchor="end">' + g + '%</text>';
+    });
+    var step = Math.max(1, Math.ceil(N / (narrow ? 3 : 6)));
+    for (var i = N - 1; i >= 0; i -= step) {
+      s += '<text x="' + x(i) + '" y="' + (h - 8) + '" text-anchor="middle">' + shortDate(dates[i]) + '</text>';
+    }
+    s += '<line id="cross" y1="' + m.t + '" y2="' + (m.t + ph) + '" style="stroke:var(--axis)" stroke-width="1" visibility="hidden"/>';
+    charted.forEach(function (team) {
+      var d = '', pen = false;
+      team.trend.forEach(function (v, i) {
+        if (v === null) { pen = false; return; }
+        d += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1) + ' ';
+        pen = true;
+      });
+      s += '<path d="' + d + '" fill="none" style="stroke:' + team.color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    });
+    var ends = charted.map(function (team) {
+      var last = team.trend[N - 1];
+      return { team: team, value: last, y: last === null ? null : y(last) };
+    });
+    ends.forEach(function (end) {
+      s += '<circle class="hov" r="4.5" style="fill:' + end.team.color + ';stroke:var(--surface)" stroke-width="2" cx="' + x(N - 1) + '" cy="' + (end.y === null ? -20 : end.y) + '"/>';
+    });
+    if (directLabels) {
+      var placed = ends.filter(function (end) { return end.y !== null; }).sort(function (a, b) { return a.y - b.y; });
+      var previous = -Infinity;
+      placed.forEach(function (end) {
+        var labelY = Math.max(end.y, previous + 14);
+        previous = labelY;
+        s += '<text class="end" x="' + (x(N - 1) + 10) + '" y="' + (labelY + 4) + '">' + end.value + '%</text>';
+      });
+    }
+    s += '<rect id="hit" x="' + m.l + '" y="' + m.t + '" width="' + pw + '" height="' + ph + '" fill="transparent"/>';
+    s += '</svg><div class="tip" id="tip" hidden></div>';
+    chart.innerHTML = s;
+
+    var hit = chart.querySelector('#hit'), cross = chart.querySelector('#cross'), tip = chart.querySelector('#tip');
+    var dots = chart.querySelectorAll('circle.hov');
+    function place(idx) {
+      Array.prototype.forEach.call(dots, function (dot, ti) {
+        var v = charted[ti].trend[idx];
+        dot.setAttribute('cx', x(idx));
+        dot.setAttribute('cy', v === null ? -20 : y(v));
+      });
+    }
+    function show(event) {
+      var px = event.clientX - chart.getBoundingClientRect().left;
+      var idx = N === 1 ? 0 : Math.max(0, Math.min(N - 1, Math.round((px - m.l) / (pw / (N - 1)))));
+      cross.setAttribute('x1', x(idx)); cross.setAttribute('x2', x(idx));
+      cross.setAttribute('visibility', 'visible');
+      place(idx);
+      var rows = charted.filter(function (team) { return team.trend[idx] !== null; })
+        .sort(function (a, b) { return b.trend[idx] - a.trend[idx]; })
+        .map(function (team) {
+          return '<div class="r"><i class="chip" style="background:' + team.color + '"></i>' + esc(team.name) + '<b>' + team.trend[idx] + '%</b></div>';
+        }).join('');
+      tip.innerHTML = '<div class="t">' + longDate(dates[idx]) + '</div>' + rows;
+      tip.hidden = false;
+      var left = x(idx) + 14;
+      if (left + tip.offsetWidth > w - 4) left = x(idx) - tip.offsetWidth - 14;
+      tip.style.left = Math.max(4, left) + 'px';
+    }
+    function hide() {
+      cross.setAttribute('visibility', 'hidden');
+      tip.hidden = true;
+      place(N - 1);
+    }
+    hit.addEventListener('pointermove', show);
+    hit.addEventListener('pointerdown', show);
+    hit.addEventListener('pointerleave', hide);
+  }
+
+  el('trend-table').innerHTML = '<table><thead><tr><th>Snapshot</th>' +
+    teams.map(function (team) { return '<th class="n">' + esc(team.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    dates.map(function (date, i) {
+      return '<tr><td>' + longDate(date) + '</td>' + teams.map(function (team) {
+        return '<td class="n">' + (team.trend[i] === null ? '–' : team.trend[i] + '%') + '</td>';
+      }).join('') + '</tr>';
+    }).join('') + '</tbody></table>';
+
+  var toggle = el('view-toggle');
+  toggle.addEventListener('click', function () {
+    var toTable = el('trend-table').hidden;
+    el('trend-table').hidden = !toTable;
+    chart.hidden = toTable;
+    el('legend').hidden = toTable;
+    toggle.textContent = toTable ? 'Show as chart' : 'Show as table';
+    toggle.setAttribute('aria-pressed', String(toTable));
+    if (!toTable) draw();
+  });
+
+  el('team-table').innerHTML = '<table><thead><tr><th>Team</th><th class="n">Files</th><th class="n">Library instances</th><th class="n">Other components</th><th class="n">Bound values</th><th class="n">Raw values</th><th>Token coverage</th></tr></thead><tbody>' +
+    teams.map(function (team) {
+      var c = coverage(team);
+      return '<tr><td><span class="name"><i class="chip" style="background:' + team.color + '"></i>' + esc(team.name) + '</span></td>' +
+        '<td class="n">' + team.files + '</td><td class="n">' + fmt(team.libraryInstances) + '</td><td class="n">' + fmt(team.otherInstances) + '</td>' +
+        '<td class="n">' + fmt(team.boundValues) + '</td><td class="n">' + fmt(team.rawValues) + '</td>' +
+        '<td>' + (c === null ? 'No values' : '<span class="meter"><span class="track"><span class="fill" style="width:' + c + '%"></span></span><b>' + c + '%</b></span>') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+
+  var components = (latest.components || []).slice(0, 10);
+  var max = components.length ? components[0].instances : 1;
+  el('bars').innerHTML = components.length ? components.map(function (component) {
+    return '<div class="bar" title="' + esc(component.name) + ': ' + fmt(component.instances) + ' instances"><span class="label">' + esc(component.name) +
+      '</span><span class="track"><span class="fill" style="width:' + (component.instances / max * 100).toFixed(1) + '%"></span></span><span class="v">' + fmt(component.instances) + '</span></div>';
+  }).join('') : '<p class="empty">No library instances found.</p>';
+
+  var unused = latest.unusedComponents;
+  el('unused').innerHTML = unused === null ? '<li class="empty">Set a library file key to list unused components.</li>'
+    : unused.length ? unused.map(function (component) { return '<li>' + esc(component.name) + '</li>'; }).join('')
+    : '<li class="empty">Every published component is in use.</li>';
+
+  var raw = latest.rawValues || [];
+  el('raw-table').innerHTML = raw.length ? '<table><thead><tr><th>Type</th><th>Value</th><th class="n">Uses</th><th class="n">Files</th><th>Nearest token</th><th>Match</th></tr></thead><tbody>' +
+    raw.map(function (value) {
+      var swatch = value.kind === 'Color' && /^#[0-9A-Fa-f]{6}$/.test(value.value) ? '<i class="sw" style="background:' + value.value + '"></i>' : '';
+      return '<tr><td>' + esc(value.kind) + '</td><td>' + swatch + '<code>' + esc(value.value) + '</code></td>' +
+        '<td class="n">' + fmt(value.uses) + '</td><td class="n">' + value.files + '</td>' +
+        '<td>' + (value.nearestToken ? '<code>' + esc(value.nearestToken) + '</code>' : 'None') + '</td>' +
+        '<td><span class="tag">' + (MATCH_LABELS[value.match] || esc(value.match)) + '</span></td></tr>';
+    }).join('') + '</tbody></table>' : '<p class="empty">No raw values found.</p>';
+
+  el('content').hidden = false;
+  draw();
+  if (window.ResizeObserver) {
+    var lastWidth = chart.clientWidth;
+    new ResizeObserver(function () {
+      if (chart.clientWidth !== lastWidth) { lastWidth = chart.clientWidth; draw(); }
+    }).observe(chart);
+  }
+})();
+</script>
+</body>
+</html>
