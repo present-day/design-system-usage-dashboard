@@ -156,6 +156,38 @@
         <div class="scroll" id="team-table"></div>
       </section>
 
+      <div id="token-use" hidden>
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="token-title">Tokens applied and detached</h2>
+              <p>From library analytics. Applied counts a variable bound to a property; detached counts one replaced by a typed-in value.</p>
+            </div>
+          </div>
+          <div class="scroll" id="token-weeks"></div>
+        </section>
+        <div class="two">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Most-detached tokens</h2>
+                <p id="token-range">Across the weeks shown</p>
+              </div>
+            </div>
+            <div class="scroll" id="token-variables"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Detachments by team</h2>
+                <p>Across the weeks shown</p>
+              </div>
+            </div>
+            <div class="scroll" id="token-teams"></div>
+          </section>
+        </div>
+      </div>
+
       <div class="two">
         <section class="panel">
           <div class="panel-head">
@@ -456,6 +488,47 @@
         '<td class="n">' + fmt(team.boundValues) + '</td><td class="n">' + fmt(team.rawValues) + '</td>' +
         '<td>' + (c === null ? (measured(team.boundValues) ? 'No values' : 'Not measured') : '<span class="meter"><span class="track"><span class="fill" style="width:' + c + '%"></span></span><b>' + c + '%</b></span>') + '</td></tr>';
     }).join('') + '</tbody></table>';
+
+  var tokenWeeks = snaps.filter(function (snapshot) { return snapshot.variables; });
+  el('token-use').hidden = !tokenWeeks.length;
+  if (tokenWeeks.length) {
+    var perThousand = function (row) { return row.insertions ? (row.detachments / row.insertions * 1000).toFixed(1) : '–'; };
+    var sumRows = function (lists, keyOf) {
+      var merged = {};
+      lists.forEach(function (list) {
+        list.forEach(function (row) {
+          var key = keyOf(row);
+          var entry = merged[key] || (merged[key] = Object.assign({}, row, { insertions: 0, detachments: 0 }));
+          entry.insertions += row.insertions;
+          entry.detachments += row.detachments;
+        });
+      });
+      return Object.keys(merged).map(function (key) { return merged[key]; })
+        .sort(function (a, b) { return b.detachments - a.detachments || b.insertions - a.insertions; });
+    };
+    el('token-title').textContent = 'Tokens applied and detached, last ' + tokenWeeks.length + ' week' + (tokenWeeks.length === 1 ? '' : 's');
+    el('token-range').textContent = 'Week ending ' + shortDate(tokenWeeks[0].date) + ' to ' + longDate(tokenWeeks[tokenWeeks.length - 1].date);
+    el('token-weeks').innerHTML = '<table><thead><tr><th>Week ending</th><th class="n">Applied</th><th class="n">Detached</th><th class="n">Detached per 1,000 applied</th></tr></thead><tbody>' +
+      tokenWeeks.map(function (snapshot) {
+        var v = snapshot.variables;
+        return '<tr><td>' + longDate(snapshot.date) + '</td><td class="n">' + fmt(v.insertions) + '</td><td class="n">' + fmt(v.detachments) + '</td><td class="n">' + perThousand(v) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+    var variables = sumRows(tokenWeeks.map(function (snapshot) { return snapshot.variables.byVariable || []; }), function (row) { return row.collection + '|' + row.name; })
+      .filter(function (row) { return row.detachments > 0; }).slice(0, 12);
+    el('token-variables').innerHTML = variables.length
+      ? '<table><thead><tr><th>Token</th><th>Collection</th><th class="n">Detached</th><th class="n">Applied</th></tr></thead><tbody>' +
+        variables.map(function (row) {
+          return '<tr><td><code>' + esc(row.name) + '</code></td><td>' + esc(row.collection) + '</td><td class="n">' + fmt(row.detachments) + '</td><td class="n">' + fmt(row.insertions) + '</td></tr>';
+        }).join('') + '</tbody></table>'
+      : '<p class="empty">No tokens were detached.</p>';
+    var tokenTeams = sumRows(tokenWeeks.map(function (snapshot) { return snapshot.variables.byTeam || []; }), function (row) { return row.id; }).slice(0, 12);
+    el('token-teams').innerHTML = tokenTeams.length
+      ? '<table><thead><tr><th>Team</th><th class="n">Detached</th><th class="n">Applied</th></tr></thead><tbody>' +
+        tokenTeams.map(function (row) {
+          return '<tr><td>' + esc(row.name) + '</td><td class="n">' + fmt(row.detachments) + '</td><td class="n">' + fmt(row.insertions) + '</td></tr>';
+        }).join('') + '</tbody></table>'
+      : '<p class="empty">No team detail in this export.</p>';
+  }
 
   function bars(rows, linked) {
     var top = rows.reduce(function (most, row) { return Math.max(most, row.value); }, 1);

@@ -13,11 +13,15 @@ const FILES = {
   actionsByComponent: 'actions_by_component.csv',
   actionsByTeam: 'actions_by_team.csv',
 };
+const OPTIONAL_FILES = {
+  variableActionsByVariable: 'variable_actions_by_variable.csv',
+  variableActionsByTeam: 'variable_actions_by_team.csv',
+};
 
 async function main() {
   const [exportDir, dataArg] = process.argv.slice(2);
   if (!exportDir) {
-    console.error(`Usage: npm run import-analytics -- <export folder> [data folder]\nThe export folder needs ${Object.values(FILES).join(', ')}.`);
+    console.error(`Usage: npm run import-analytics -- <export folder> [data folder]\nThe export folder needs ${Object.values(FILES).join(', ')}, and can add ${Object.values(OPTIONAL_FILES).join(', ')}.`);
     process.exitCode = 1;
     return;
   }
@@ -29,6 +33,14 @@ async function main() {
       rows[name] = parseCsv(await readFile(path.join(exportDir, file), 'utf8'));
     } catch (error) {
       throw new Error(`Could not read ${file} in ${exportDir}: ${error.message}`);
+    }
+  }
+
+  for (const [name, file] of Object.entries(OPTIONAL_FILES)) {
+    try {
+      rows[name] = parseCsv(await readFile(path.join(exportDir, file), 'utf8'));
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw new Error(`Could not read ${file} in ${exportDir}: ${error.message}`);
     }
   }
 
@@ -50,6 +62,11 @@ async function main() {
 
   const latest = snapshots.at(-1);
   console.log(`Wrote ${snapshots.length} weekly snapshots (${snapshots[0].date} to ${latest.date}) to ${dataDir}`);
+  if (latest.variables) {
+    console.log(`Variables: ${snapshots.reduce((sum, snapshot) => sum + snapshot.variables.insertions, 0).toLocaleString()} applied, ${snapshots.reduce((sum, snapshot) => sum + snapshot.variables.detachments, 0).toLocaleString()} detached across all weeks`);
+  } else {
+    console.log(`No variable exports found (${Object.values(OPTIONAL_FILES).join(', ')}); skipped token use.`);
+  }
   console.log(`Latest: ${latest.teams.reduce((sum, team) => sum + team.libraryInstances, 0).toLocaleString()} library instances in ${latest.teams.reduce((sum, team) => sum + team.files, 0)} files across ${latest.teams.length} teams`);
 }
 
