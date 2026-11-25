@@ -32,7 +32,7 @@ Snapshots hold counts, component names and raw values such as `#1A4B8C` or `14px
 
 1. **Create a Figma access token** with read access to file content and to published library content. Figma names these scopes `file_content:read` and `library_content:read`; check Figma's scope documentation if a request is refused. Use an account that can view every file you list, ideally a shared account and not a personal one.
 2. **Add the token as a repository secret** named `FIGMA_TOKEN`.
-3. **Optionally add a repository variable** named `FIGMA_TOKEN_EXPIRES_ON` with the expiry date, such as `2027-01-18`. The dashboard warns for three weeks before that date. Another variable, `FIGMA_REQUESTS_PER_MINUTE`, sets the request pace (see [Rate limits](#rate-limits)).
+3. **Optionally add a repository variable** named `FIGMA_TOKEN_EXPIRES_ON` with the expiry date, such as `2027-01-18`. The dashboard shows how many days the token has left in a banner at the top, which turns into a warning three weeks before that date. Another variable, `FIGMA_REQUESTS_PER_MINUTE`, sets the request pace (see [Rate limits](#rate-limits)).
 4. **Edit `dashboard.config.json`:**
 
    ```json
