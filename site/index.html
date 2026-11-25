@@ -260,6 +260,14 @@
   var longDate = function (iso) { return shortDate(iso) + ', ' + iso.slice(0, 4); };
   // A null count means the data source does not measure it, which is different from zero.
   var measured = function (value) { return value !== null && value !== undefined; };
+  // Rounding alone shows 12 of 9,609 as 0%, which reads as none.
+  var share = function (part, whole) {
+    if (!whole) return '0%';
+    var percent = part / whole * 100;
+    if (part > 0 && percent < 1) return '<1%';
+    if (part < whole && percent > 99) return '>99%';
+    return Math.round(percent) + '%';
+  };
   var coverage = function (team) {
     if (!measured(team.boundValues)) return null;
     var total = team.boundValues + team.rawValues;
@@ -351,7 +359,7 @@
   el('tiles').innerHTML = [
     now.tokensMeasured ? ['Token coverage, all teams', coverageNow + '%', changeText] : ['Token coverage, all teams', '–', notMeasured],
     now.otherMeasured
-      ? ['Instances from the library', (instances ? Math.round(now.library / instances * 100) : 0) + '%', fmt(now.library) + ' of ' + fmt(instances) + ' instances']
+      ? ['Instances from the library', esc(share(now.library, instances)), fmt(now.library) + ' of ' + fmt(instances) + ' instances']
       : ['Library instances', fmt(now.library), 'Instances from other libraries not measured'],
     now.tokensMeasured ? ['Raw values still in files', fmt(now.raw), 'out of ' + fmt(now.bound + now.raw) + ' values counted'] : ['Raw values still in files', '–', notMeasured],
     ['Files measured', String(now.files), 'across ' + teams.length + ' team' + (teams.length === 1 ? '' : 's')]
@@ -618,9 +626,9 @@
       '<div class="detail-head"><h2>' + esc(component.name) + '</h2><p>Library component, as of ' + longDate(latest.date) + '</p></div>' +
       '<div class="tiles">' +
         tile('Instances', fmt(component.instances), 'across all measured files') +
-        tile('Share of library instances', (now.library ? Math.round(component.instances / now.library * 100) : 0) + '%', 'of ' + fmt(now.library) + ' library instances') +
+        tile('Share of library instances', esc(share(component.instances, now.library)), 'of ' + fmt(now.library) + ' library instances') +
         (measured(component.restyled)
-          ? tile('Restyled instances', (component.instances ? Math.round(restyled / component.instances * 100) : 0) + '%', fmt(restyled) + ' have a visual override')
+          ? tile('Restyled instances', esc(share(restyled, component.instances)), fmt(restyled) + ' have a visual override')
           : tile('Detached in the latest week', fmt(component.detachments), fmt(component.insertions) + ' inserted that week')) +
         (teamsMeasured
           ? tile('Teams using it', usedBy.length + ' of ' + teams.length, usedBy.length === teams.length ? 'every team' : 'not yet everywhere')
