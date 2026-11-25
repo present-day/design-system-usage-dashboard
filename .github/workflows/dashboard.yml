@@ -30,6 +30,7 @@ jobs:
         env:
           FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
           FIGMA_TOKEN_EXPIRES_ON: ${{ vars.FIGMA_TOKEN_EXPIRES_ON }}
+          FIGMA_REQUESTS_PER_MINUTE: ${{ vars.FIGMA_REQUESTS_PER_MINUTE }}
         run: npm run collect
 
       - name: Commit snapshot

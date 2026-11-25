@@ -12,6 +12,7 @@
     "collect": "node collector/collect.mjs",
     "sample": "node scripts/generate-sample.mjs",
     "test": "node --test",
-    "serve": "python3 -m http.server 4173 --directory site"
+    "serve": "python3 -m http.server 4173 --directory site",
+    "scale-test": "node scripts/scale-test.mjs"
   }
 }
