@@ -1,5 +1,6 @@
 const TOP_COMPONENTS = 50;
 const TOP_VARIANTS = 12;
+const TOP_VARIABLES = 50;
 const DAY = 86400000;
 
 /** Parses RFC 4180 CSV text into one object per row, keyed by the header row. */
@@ -38,6 +39,10 @@ const count = (value) => Number(value) || 0;
  * `usagesByFile` (team_name, file_name, num_instances),
  * `actionsByComponent` (week, component_key, component_name, component_set_name, insertions, detachments) and
  * `actionsByTeam` (week, team_name, insertions, detachments).
+ * Two variable exports are optional: `variableActionsByVariable` (week, variable_name,
+ * variable_type, collection_name, insertions, detachments) and `variableActionsByTeam`
+ * (week, team_name, insertions, detachments). With them, each snapshot gets a `variables`
+ * object for that week; without them, `variables` is null.
  *
  * Usage counts are current, so the latest snapshot uses them as they are, dated the last
  * day of the latest week. Each earlier week's instance counts are back-computed as current
@@ -47,7 +52,10 @@ const count = (value) => Number(value) || 0;
  * libraries, restyled instances, per-team component use) are null, which the dashboard
  * shows as "Not measured".
  */
-export function snapshotsFromAnalytics({ usagesByComponent, usagesByFile, actionsByComponent, actionsByTeam }, { generatedAt = new Date().toISOString() } = {}) {
+export function snapshotsFromAnalytics(
+  { usagesByComponent, usagesByFile, actionsByComponent, actionsByTeam, variableActionsByVariable = null, variableActionsByTeam = null },
+  { generatedAt = new Date().toISOString() } = {},
+) {
   const setOfKey = new Map();
   for (const row of actionsByComponent) {
     if (row.component_set_name) setOfKey.set(row.component_key, row.component_set_name);
@@ -83,7 +91,7 @@ export function snapshotsFromAnalytics({ usagesByComponent, usagesByFile, action
   }
 
   const componentOfAction = (row) => row.component_set_name || nameOf(row).set;
-  const weeks = [...new Set([...actionsByComponent, ...actionsByTeam].map((row) => row.week))].filter(Boolean).sort();
+  const weeks = [...new Set([...actionsByComponent, ...actionsByTeam, ...(variableActionsByVariable ?? [])].map((row) => row.week))].filter(Boolean).sort();
   if (!weeks.length) throw new Error('The export has no weekly actions, so there is nothing to date the snapshots by.');
 
   const sumBy = (rows, keyOf, include, field) => {
@@ -146,10 +154,43 @@ export function snapshotsFromAnalytics({ usagesByComponent, usagesByFile, action
           teams: null,
           locations: [],
         })),
+      variables: variableActionsByVariable ? variablesForWeek(variableActionsByVariable, variableActionsByTeam ?? [], week) : null,
       unusedComponents: null,
       pages: [],
       rawValues: [],
       errors: [],
     };
   });
+}
+
+/**
+ * Summarizes one week of variable actions. Insertions count a variable being applied to a
+ * property; detachments count it being replaced by a literal value. `byVariable` keeps the
+ * variables with the most detachments, then the most insertions.
+ */
+function variablesForWeek(byVariableRows, byTeamRows, week) {
+  const group = (rows, keyOf, describe) => {
+    const groups = new Map();
+    for (const row of rows) {
+      if (row.week !== week) continue;
+      const key = keyOf(row);
+      const entry = groups.get(key) ?? { ...describe(row), insertions: 0, detachments: 0 };
+      entry.insertions += count(row.insertions);
+      entry.detachments += count(row.detachments);
+      groups.set(key, entry);
+    }
+    return [...groups.values()].sort((a, b) => b.detachments - a.detachments || b.insertions - a.insertions);
+  };
+  const byVariable = group(byVariableRows, (row) => row.variable_key || row.variable_name, (row) => ({
+    name: row.variable_name,
+    // Figma's collection names can carry trailing spaces.
+    collection: (row.collection_name ?? '').trim(),
+    type: row.variable_type,
+  }));
+  return {
+    insertions: byVariable.reduce((sum, v) => sum + v.insertions, 0),
+    detachments: byVariable.reduce((sum, v) => sum + v.detachments, 0),
+    byVariable: byVariable.slice(0, TOP_VARIABLES),
+    byTeam: group(byTeamRows, (row) => row.team_name, (row) => ({ id: slug(row.team_name), name: row.team_name })),
+  };
 }

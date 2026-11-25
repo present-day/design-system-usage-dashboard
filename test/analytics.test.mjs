@@ -86,3 +86,41 @@ test('leaves what the export cannot measure as null rather than zero', () => {
 test('refuses an export with no weekly actions', () => {
   assert.throws(() => snapshotsFromAnalytics({ ...exportRows, actionsByComponent: [], actionsByTeam: [] }), /no weekly actions/);
 });
+
+const variableRows = {
+  variableActionsByVariable: csv(`
+    variable_key,week,detachments,insertions,variable_name,variable_type,collection_key,collection_name
+    v-bg,2026-08-02,0,40,Surface/Default,COLOR,c-1,Semantic colors
+    v-bg,2026-08-09,3,10,Surface/Default,COLOR,c-1,Semantic colors
+    v-gap,2026-08-09,1,30,Spacing/MD,FLOAT,c-2,"Spacing "
+    v-other,2026-08-09,0,5,Spacing/LG,FLOAT,c-2,"Spacing "
+  `),
+  variableActionsByTeam: csv(`
+    week,detachments,insertions,team_name,workspace_name
+    2026-08-02,0,40,Checkout,Commerce
+    2026-08-09,3,35,Checkout,Commerce
+    2026-08-09,1,10,Onboarding,Growth
+  `),
+};
+
+test('summarizes each week of variable actions by variable and team, trimming collection names', () => {
+  const [earlier, latest] = snapshotsFromAnalytics({ ...exportRows, ...variableRows });
+  assert.deepEqual([earlier.variables.insertions, earlier.variables.detachments], [40, 0]);
+
+  const { variables } = latest;
+  assert.deepEqual([variables.insertions, variables.detachments], [45, 4]);
+  assert.deepEqual(variables.byVariable.map((v) => [v.name, v.detachments, v.insertions]), [
+    ['Surface/Default', 3, 10],
+    ['Spacing/MD', 1, 30],
+    ['Spacing/LG', 0, 5],
+  ]);
+  assert.equal(variables.byVariable.find((v) => v.name === 'Spacing/MD').collection, 'Spacing');
+  assert.deepEqual(variables.byTeam, [
+    { id: 'checkout', name: 'Checkout', insertions: 35, detachments: 3 },
+    { id: 'onboarding', name: 'Onboarding', insertions: 10, detachments: 1 },
+  ]);
+});
+
+test('leaves variables null when the export has no variable files', () => {
+  assert.ok(snapshotsFromAnalytics(exportRows).every((snapshot) => snapshot.variables === null));
+});

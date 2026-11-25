@@ -69,11 +69,13 @@ Snapshots hold counts, component names and raw values such as `#1A4B8C` or `14px
 On plans that include library analytics, Figma reports how often each library component is inserted, detached and used, by team and by file. That covers adoption without reading any files, so it is a fast way to fill the dashboard before the collector is set up.
 
 1. Export the library's analytics as CSV, using Figma's names for the groupings: `usages_by_component.csv`, `usages_by_file.csv`, `actions_by_component.csv` and `actions_by_team.csv`.
+   Add `variable_actions_by_variable.csv` and `variable_actions_by_team.csv` to also import how often tokens (variables) are applied and detached.
 2. Run `npm run import-analytics -- path/to/export`. It writes one snapshot per week to `site/data/`, or to a folder given as a second argument.
 
 What changes on the dashboard:
 
 - **Library instances by team** replaces the token-coverage chart, and component pages show the latest week's detachments and insertions.
+- **Tokens applied and detached** appears when the variable exports are included: a weekly total with detachments per 1,000 applications, the most-detached tokens, and detachments by team. A detachment is a token replaced by a typed-in value, so the most-detached tokens point to where the system does not fit.
 - **Token coverage, raw values, instances from other libraries and page detail show as "Not measured".** They need a file read, which only the collector does.
 - **Weeks before the latest are estimated.** Usage is only exported as current totals, so each earlier week is current usage minus later insertions plus later detachments. Instances deleted outright are missed.
 
