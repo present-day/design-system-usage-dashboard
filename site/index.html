@@ -232,7 +232,6 @@
       <div class="foot">
         <p><b>How it is counted.</b> A scheduled job reads each registered file through Figma's REST API. An instance counts as a library instance when its main component is published by the design system library. A value counts as bound when the node references a variable or style, and as raw when it holds a literal. Values inside an instance are not counted, since they belong to the library.</p>
         <p><b>What it cannot see.</b> A detached component becomes a plain frame, so detaches are not counted here.</p>
-        <p id="token-line"></p>
       </div>
     </div>
   </div>
@@ -338,10 +337,10 @@
     var daysLeft = Math.ceil((Date.parse(latest.tokenExpiresOn) - reference) / DAY);
     if (daysLeft <= 0) {
       notices.push('<div class="notice warn"><b>Warning: the Figma access token expired on ' + longDate(latest.tokenExpiresOn) + '.</b> Replace it or these numbers stay as they are.</div>');
-    } else if (daysLeft <= EXPIRY_WARNING_DAYS) {
-      notices.push('<div class="notice warn"><b>Warning: the Figma access token expires ' + longDate(latest.tokenExpiresOn) + '</b>, in ' + daysLeft + ' days. Rotate it before then or the scheduled run stops and these numbers go stale.</div>');
     } else {
-      el('token-line').innerHTML = '<b>Access token.</b> Expires ' + longDate(latest.tokenExpiresOn) + '.';
+      var soon = daysLeft <= EXPIRY_WARNING_DAYS;
+      notices.push('<div class="notice' + (soon ? ' warn' : '') + '"><b>' + (soon ? 'Warning: the' : 'The') + ' Figma access token expires ' + longDate(latest.tokenExpiresOn) + '</b>, in ' +
+        daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + '. Rotate it before then or the scheduled run stops and these numbers go stale.</div>');
     }
   }
   el('strip').innerHTML = notices.join('');
