@@ -137,7 +137,7 @@
         <div class="panel-head">
           <div>
             <h2 id="trend-title">Token coverage by team</h2>
-            <p>Share of color, spacing, radius and type values bound to a variable or style</p>
+            <p id="trend-sub">Share of color, spacing, radius and type values bound to a variable or style</p>
           </div>
           <button type="button" class="toggle" id="view-toggle" aria-pressed="false">Show as table</button>
         </div>
@@ -264,12 +264,16 @@
   }
 
   var latest = snaps[snaps.length - 1], N = snaps.length;
+  // Without token data (as from library analytics), the trend chart shows library instances instead.
+  var tokensEverMeasured = snaps.some(function (snapshot) { return totals(snapshot).tokensMeasured; });
+  var trendValue = tokensEverMeasured ? coverage : function (team) { return team.libraryInstances; };
+  var trendText = tokensEverMeasured ? function (v) { return v + '%'; } : fmt;
   var teams = latest.teams.map(function (team, i) {
     return Object.assign({}, team, {
       color: i < MAX_SERIES ? 'var(--s' + (i + 1) + ')' : 'var(--muted)',
       trend: snaps.map(function (snapshot) {
         var match = snapshot.teams.find(function (other) { return other.id === team.id; });
-        return match ? coverage(match) : null;
+        return match ? trendValue(match) : null;
       })
     });
   });
@@ -281,6 +285,9 @@
   var notices = [];
   if (latest.sample) {
     notices.push('<div class="notice"><b>Sample data.</b> The teams, components and numbers are invented to show what the dashboard reports. Add a Figma token and file keys to replace them with real measurements.</div>');
+  }
+  if (latest.source === 'figma-library-analytics') {
+    notices.push('<div class="notice"><b>Source: Figma library analytics.</b> Usage and detachments come from Figma\'s weekly export. Token coverage, raw values and page detail need a file read and are not measured. Weeks before the latest are estimated from later insertions and detachments.</div>');
   }
   if (latest.errors && latest.errors.length) {
     notices.push('<div class="notice warn"><b>Warning: ' + latest.errors.length + ' file(s) could not be read in the latest run.</b> ' +
@@ -320,31 +327,41 @@
     return '<div class="tile"><span class="label">' + tile[0] + '</span><span class="value">' + tile[1] + '</span><span class="delta">' + tile[2] + '</span></div>';
   }).join('');
 
-  el('trend-title').textContent = 'Token coverage by team, last ' + N + ' snapshot' + (N === 1 ? '' : 's');
+  el('trend-title').textContent = (tokensEverMeasured ? 'Token coverage' : 'Library instances') + ' by team, last ' + N + ' snapshot' + (N === 1 ? '' : 's');
+  if (!tokensEverMeasured) el('trend-sub').textContent = 'Instances of library components across each team\'s files';
   el('legend').innerHTML = charted.map(function (team) {
     return '<span><i class="chip" style="background:' + team.color + '"></i>' + esc(team.name) + '</span>';
   }).join('') + (teams.length > MAX_SERIES ? '<span>' + (teams.length - MAX_SERIES) + ' more in the table below</span>' : '');
 
   var chart = el('chart');
-  var tokensEverMeasured = snaps.some(function (snapshot) { return totals(snapshot).tokensMeasured; });
-  el('trend-panel').hidden = !tokensEverMeasured;
+  var trendTop = 100;
+  if (!tokensEverMeasured) {
+    var peak = Math.max.apply(null, charted.map(function (team) {
+      return Math.max.apply(null, team.trend.filter(function (v) { return v !== null; }).concat([1]));
+    }).concat([1]));
+    var magnitude = Math.pow(10, Math.floor(Math.log10(peak)));
+    trendTop = Math.ceil(peak / magnitude) * magnitude;
+  }
+  var axisText = function (v) {
+    if (tokensEverMeasured) return v + '%';
+    return v >= 1000 ? (v / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 }) + 'k' : String(v);
+  };
   function draw() {
-    if (!tokensEverMeasured) return;
     var w = chart.clientWidth || 600, narrow = w < 520;
     var directLabels = charted.length <= 4;
     var h = narrow ? 250 : 320;
     var m = { t: 14, r: directLabels ? 52 : 14, b: 28, l: 38 };
     var pw = w - m.l - m.r, ph = h - m.t - m.b;
     var x = function (i) { return N === 1 ? m.l + pw / 2 : m.l + i * pw / (N - 1); };
-    var y = function (v) { return m.t + ph * (1 - v / 100); };
-    var s = '<svg viewBox="0 0 ' + w + ' ' + h + '" height="' + h + '" role="img" aria-label="Line chart of token coverage by team. Use Show as table for the values.">';
-    [0, 25, 50, 75, 100].forEach(function (g) {
+    var y = function (v) { return m.t + ph * (1 - v / trendTop); };
+    var s = '<svg viewBox="0 0 ' + w + ' ' + h + '" height="' + h + '" role="img" aria-label="Line chart of ' + (tokensEverMeasured ? 'token coverage' : 'library instances') + ' by team. Use Show as table for the values.">';
+    [0, 0.25, 0.5, 0.75, 1].map(function (f) { return f * trendTop; }).forEach(function (g) {
       s += '<line x1="' + m.l + '" x2="' + (m.l + pw) + '" y1="' + y(g) + '" y2="' + y(g) + '" style="stroke:var(--' + (g === 0 ? 'axis' : 'grid') + ')" stroke-width="1"/>';
-      s += '<text x="' + (m.l - 8) + '" y="' + (y(g) + 4) + '" text-anchor="end">' + g + '%</text>';
+      s += '<text x="' + (m.l - 8) + '" y="' + (y(g) + 4) + '" text-anchor="end">' + axisText(g) + '</text>';
     });
     var step = Math.max(1, Math.ceil(N / (narrow ? 3 : 6)));
     for (var i = N - 1; i >= 0; i -= step) {
-      s += '<text x="' + x(i) + '" y="' + (h - 8) + '" text-anchor="middle">' + shortDate(dates[i]) + '</text>';
+      s += '<text x="' + x(i) + '" y="' + (h - 8) + '" text-anchor="' + (i === N - 1 && !directLabels && N > 1 ? 'end' : 'middle') + '">' + shortDate(dates[i]) + '</text>';
     }
     s += '<line id="cross" y1="' + m.t + '" y2="' + (m.t + ph) + '" style="stroke:var(--axis)" stroke-width="1" visibility="hidden"/>';
     charted.forEach(function (team) {
@@ -369,7 +386,7 @@
       placed.forEach(function (end) {
         var labelY = Math.max(end.y, previous + 14);
         previous = labelY;
-        s += '<text class="end" x="' + (x(N - 1) + 10) + '" y="' + (labelY + 4) + '">' + end.value + '%</text>';
+        s += '<text class="end" x="' + (x(N - 1) + 10) + '" y="' + (labelY + 4) + '">' + (tokensEverMeasured ? trendText(end.value) : axisText(end.value)) + '</text>';
       });
     }
     s += '<rect id="hit" x="' + m.l + '" y="' + m.t + '" width="' + pw + '" height="' + ph + '" fill="transparent"/>';
@@ -394,7 +411,7 @@
       var rows = charted.filter(function (team) { return team.trend[idx] !== null; })
         .sort(function (a, b) { return b.trend[idx] - a.trend[idx]; })
         .map(function (team) {
-          return '<div class="r"><i class="chip" style="background:' + team.color + '"></i>' + esc(team.name) + '<b>' + team.trend[idx] + '%</b></div>';
+          return '<div class="r"><i class="chip" style="background:' + team.color + '"></i>' + esc(team.name) + '<b>' + trendText(team.trend[idx]) + '</b></div>';
         }).join('');
       tip.innerHTML = '<div class="t">' + longDate(dates[idx]) + '</div>' + rows;
       tip.hidden = false;
@@ -416,7 +433,7 @@
     teams.map(function (team) { return '<th class="n">' + esc(team.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
     dates.map(function (date, i) {
       return '<tr><td>' + longDate(date) + '</td>' + teams.map(function (team) {
-        return '<td class="n">' + (team.trend[i] === null ? '–' : team.trend[i] + '%') + '</td>';
+        return '<td class="n">' + (team.trend[i] === null ? '–' : trendText(team.trend[i])) + '</td>';
       }).join('') + '</tr>';
     }).join('') + '</tbody></table>';
 
@@ -517,6 +534,7 @@
     });
     var restyled = component.restyled || 0;
     var usedBy = component.teams || [];
+    var teamsMeasured = Array.isArray(component.teams);
     var variants = component.variants || [];
     var locations = component.locations || [];
     var tile = function (label, value, note) {
@@ -528,8 +546,12 @@
       '<div class="tiles">' +
         tile('Instances', fmt(component.instances), 'across all measured files') +
         tile('Share of library instances', (now.library ? Math.round(component.instances / now.library * 100) : 0) + '%', 'of ' + fmt(now.library) + ' library instances') +
-        tile('Restyled instances', (component.instances ? Math.round(restyled / component.instances * 100) : 0) + '%', fmt(restyled) + ' have a visual override') +
-        tile('Teams using it', usedBy.length + ' of ' + teams.length, usedBy.length === teams.length ? 'every team' : 'not yet everywhere') +
+        (measured(component.restyled)
+          ? tile('Restyled instances', (component.instances ? Math.round(restyled / component.instances * 100) : 0) + '%', fmt(restyled) + ' have a visual override')
+          : tile('Detached in the latest week', fmt(component.detachments), fmt(component.insertions) + ' inserted that week')) +
+        (teamsMeasured
+          ? tile('Teams using it', usedBy.length + ' of ' + teams.length, usedBy.length === teams.length ? 'every team' : 'not yet everywhere')
+          : tile('Teams using it', '–', 'Not measured by this data source')) +
       '</div>' +
       (N > 1 ? '<section class="panel"><div class="panel-head"><div><h2>Instances over time</h2><p>Last ' + N + ' snapshots</p></div></div><div class="chart">' + singleSeries(history) + '</div></section>' : '') +
       '<div class="two">' +
@@ -537,7 +559,9 @@
           (variants.length ? bars(variants.map(function (variant) { return { label: variant.name, value: variant.instances }; }), false) : '<p class="empty">This component has no variants.</p>') +
         '</div></section>' +
         '<section class="panel"><div class="panel-head"><div><h2>By team</h2><p>Instances per team</p></div></div><div class="bars">' +
-          bars(usedBy.map(function (team) { return { label: teamNames[team.id] || team.id, value: team.instances }; }), false) +
+          (teamsMeasured
+            ? bars(usedBy.map(function (team) { return { label: teamNames[team.id] || team.id, value: team.instances }; }), false)
+            : '<p class="empty">Not measured by this data source.</p>') +
         '</div></section>' +
       '</div>' +
       '<section class="panel"><div class="panel-head"><div><h2>Where it is used</h2><p>Pages with the most instances</p></div></div><div class="scroll">' +
@@ -564,7 +588,8 @@
   window.addEventListener('hashchange', route);
 
   var unused = latest.unusedComponents;
-  el('unused').innerHTML = unused === null ? '<li class="empty">Set a library file key to list unused components.</li>'
+  el('unused').innerHTML = unused === null
+    ? '<li class="empty">' + (latest.source === 'figma-library-analytics' ? 'Not measured by this data source.' : 'Set a library file key to list unused components.') + '</li>'
     : unused.length ? unused.map(function (component) { return '<li>' + esc(component.name) + '</li>'; }).join('')
     : '<li class="empty">Every published component is in use.</li>';
 

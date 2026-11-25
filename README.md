@@ -64,6 +64,21 @@ Snapshots hold counts, component names and raw values such as `#1A4B8C` or `14px
 | `ignorePages` | No | Page names to skip, matched as case-insensitive substrings. Also accepted on a single file entry. |
 | `figmaTokenExpiresOn` | No | Same as the `FIGMA_TOKEN_EXPIRES_ON` variable, which takes precedence. |
 
+## Import Figma library analytics
+
+On plans that include library analytics, Figma reports how often each library component is inserted, detached and used, by team and by file. That covers adoption without reading any files, so it is a fast way to fill the dashboard before the collector is set up.
+
+1. Export the library's analytics as CSV, using Figma's names for the groupings: `usages_by_component.csv`, `usages_by_file.csv`, `actions_by_component.csv` and `actions_by_team.csv`.
+2. Run `npm run import-analytics -- path/to/export`. It writes one snapshot per week to `site/data/`, or to a folder given as a second argument.
+
+What changes on the dashboard:
+
+- **Library instances by team** replaces the token-coverage chart, and component pages show the latest week's detachments and insertions.
+- **Token coverage, raw values, instances from other libraries and page detail show as "Not measured".** They need a file read, which only the collector does.
+- **Weeks before the latest are estimated.** Usage is only exported as current totals, so each earlier week is current usage minus later insertions plus later detachments. Instances deleted outright are missed.
+
+Analytics exports name your teams, people's drafts and files. If the repository is public, keep imported snapshots out of it.
+
 ## Large and untidy files
 
 The collector never downloads a whole file in one request. It lists the pages first, then reads top-level layers 25 at a time across pages, so file size affects how long a run takes and not whether it finishes.
@@ -118,6 +133,7 @@ Requires Node 20 or newer. There are no dependencies to install.
 ```sh
 npm test                      # collector tests
 npm run scale-test            # collector against a large mock Figma API
+npm run import-analytics -- path/to/export   # snapshots from a library analytics CSV export
 npm run sample                # regenerate site/sample-data
 npm run serve                 # dashboard at http://localhost:4173
 FIGMA_TOKEN=... npm run collect   # write a real snapshot to site/data
