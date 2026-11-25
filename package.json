@@ -13,6 +13,7 @@
     "sample": "node scripts/generate-sample.mjs",
     "test": "node --test",
     "serve": "python3 -m http.server 4173 --directory site",
-    "scale-test": "node scripts/scale-test.mjs"
+    "scale-test": "node scripts/scale-test.mjs",
+    "import-analytics": "node scripts/import-analytics.mjs"
   }
 }
