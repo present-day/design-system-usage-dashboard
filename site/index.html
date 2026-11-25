@@ -133,7 +133,7 @@
     <div class="wrap">
       <div class="tiles" id="tiles"></div>
 
-      <section class="panel">
+      <section class="panel" id="trend-panel">
         <div class="panel-head">
           <div>
             <h2 id="trend-title">Token coverage by team</h2>
@@ -215,7 +215,7 @@
   var MATCH_LABELS = { exact: 'Exact match', near: 'Near match', none: 'No match', unchecked: 'Not checked' };
 
   var el = function (id) { return document.getElementById(id); };
-  var fmt = function (n) { return n.toLocaleString('en-US'); };
+  var fmt = function (n) { return n === null || n === undefined ? '–' : n.toLocaleString('en-US'); };
   var esc = function (text) {
     return String(text).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -226,16 +226,21 @@
     return MONTHS[parts[1] - 1] + ' ' + parts[2];
   };
   var longDate = function (iso) { return shortDate(iso) + ', ' + iso.slice(0, 4); };
+  // A null count means the data source does not measure it, which is different from zero.
+  var measured = function (value) { return value !== null && value !== undefined; };
   var coverage = function (team) {
+    if (!measured(team.boundValues)) return null;
     var total = team.boundValues + team.rawValues;
     return total ? Math.round(team.boundValues / total * 100) : null;
   };
   var totals = function (snapshot) {
     return snapshot.teams.reduce(function (sum, team) {
-      sum.bound += team.boundValues; sum.raw += team.rawValues;
-      sum.library += team.libraryInstances; sum.other += team.otherInstances; sum.files += team.files;
+      sum.bound += team.boundValues || 0; sum.raw += team.rawValues || 0;
+      sum.library += team.libraryInstances; sum.other += team.otherInstances || 0; sum.files += team.files;
+      if (measured(team.boundValues)) sum.tokensMeasured = true;
+      if (measured(team.otherInstances)) sum.otherMeasured = true;
       return sum;
-    }, { bound: 0, raw: 0, library: 0, other: 0, files: 0 });
+    }, { bound: 0, raw: 0, library: 0, other: 0, files: 0, tokensMeasured: false, otherMeasured: false });
   };
 
   async function loadSet(base) {
@@ -303,10 +308,13 @@
     : change < 0 ? '▼ ' + Math.abs(change) + ' points since ' + shortDate(dates[0])
     : 'No change since ' + shortDate(dates[0]);
   var instances = now.library + now.other;
+  var notMeasured = 'Not measured by this data source';
   el('tiles').innerHTML = [
-    ['Token coverage, all teams', coverageNow + '%', changeText],
-    ['Instances from the library', (instances ? Math.round(now.library / instances * 100) : 0) + '%', fmt(now.library) + ' of ' + fmt(instances) + ' instances'],
-    ['Raw values still in files', fmt(now.raw), 'out of ' + fmt(now.bound + now.raw) + ' values counted'],
+    now.tokensMeasured ? ['Token coverage, all teams', coverageNow + '%', changeText] : ['Token coverage, all teams', '–', notMeasured],
+    now.otherMeasured
+      ? ['Instances from the library', (instances ? Math.round(now.library / instances * 100) : 0) + '%', fmt(now.library) + ' of ' + fmt(instances) + ' instances']
+      : ['Library instances', fmt(now.library), 'Instances from other libraries not measured'],
+    now.tokensMeasured ? ['Raw values still in files', fmt(now.raw), 'out of ' + fmt(now.bound + now.raw) + ' values counted'] : ['Raw values still in files', '–', notMeasured],
     ['Files measured', String(now.files), 'across ' + teams.length + ' team' + (teams.length === 1 ? '' : 's')]
   ].map(function (tile) {
     return '<div class="tile"><span class="label">' + tile[0] + '</span><span class="value">' + tile[1] + '</span><span class="delta">' + tile[2] + '</span></div>';
@@ -318,7 +326,10 @@
   }).join('') + (teams.length > MAX_SERIES ? '<span>' + (teams.length - MAX_SERIES) + ' more in the table below</span>' : '');
 
   var chart = el('chart');
+  var tokensEverMeasured = snaps.some(function (snapshot) { return totals(snapshot).tokensMeasured; });
+  el('trend-panel').hidden = !tokensEverMeasured;
   function draw() {
+    if (!tokensEverMeasured) return;
     var w = chart.clientWidth || 600, narrow = w < 520;
     var directLabels = charted.length <= 4;
     var h = narrow ? 250 : 320;
@@ -426,7 +437,7 @@
       return '<tr><td><span class="name"><i class="chip" style="background:' + team.color + '"></i>' + esc(team.name) + '</span></td>' +
         '<td class="n">' + team.files + '</td><td class="n">' + fmt(team.libraryInstances) + '</td><td class="n">' + fmt(team.otherInstances) + '</td>' +
         '<td class="n">' + fmt(team.boundValues) + '</td><td class="n">' + fmt(team.rawValues) + '</td>' +
-        '<td>' + (c === null ? 'No values' : '<span class="meter"><span class="track"><span class="fill" style="width:' + c + '%"></span></span><b>' + c + '%</b></span>') + '</td></tr>';
+        '<td>' + (c === null ? (measured(team.boundValues) ? 'No values' : 'Not measured') : '<span class="meter"><span class="track"><span class="fill" style="width:' + c + '%"></span></span><b>' + c + '%</b></span>') + '</td></tr>';
     }).join('') + '</tbody></table>';
 
   function bars(rows, linked) {
@@ -458,7 +469,7 @@
       var c = coverage(page);
       return '<tr><td>' + esc(teamNames[page.team] || page.team) + '</td><td>' + esc(page.file) + '</td><td>' + esc(page.page) + '</td>' +
         '<td class="n">' + fmt(page.rawValues) + '</td><td class="n">' + fmt(page.libraryInstances) + '</td><td class="n">' + fmt(page.otherInstances) + '</td>' +
-        '<td>' + (c === null ? 'No values' : meter(c)) + '</td></tr>';
+        '<td>' + (c === null ? (measured(page.boundValues) ? 'No values' : 'Not measured') : meter(c)) + '</td></tr>';
     }).join('') + '</tbody></table>';
 
   function singleSeries(values) {
@@ -565,7 +576,7 @@
         '<td class="n">' + fmt(value.uses) + '</td><td class="n">' + value.files + '</td>' +
         '<td>' + (value.nearestToken ? '<code>' + esc(value.nearestToken) + '</code>' : 'None') + '</td>' +
         '<td><span class="tag">' + (MATCH_LABELS[value.match] || esc(value.match)) + '</span></td></tr>';
-    }).join('') + '</tbody></table>' : '<p class="empty">No raw values found.</p>';
+    }).join('') + '</tbody></table>' : '<p class="empty">' + (now.tokensMeasured ? 'No raw values found.' : 'Raw values are not measured by this data source.') + '</p>';
 
   route();
   if (window.ResizeObserver) {

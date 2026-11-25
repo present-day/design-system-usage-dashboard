@@ -8,8 +8,9 @@ import { buildSnapshot } from './snapshot.mjs';
 import { flattenTokens } from './tokens.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const dataDir = path.join(root, 'site', 'data');
+const dataDir = process.env.DASHBOARD_DATA_DIR ? path.resolve(process.env.DASHBOARD_DATA_DIR) : path.join(root, 'site', 'data');
 const snapshotDir = path.join(dataDir, 'snapshots');
+const configPath = process.env.DASHBOARD_CONFIG ? path.resolve(process.env.DASHBOARD_CONFIG) : path.join(root, 'dashboard.config.json');
 
 async function readJson(file) {
   return JSON.parse(await readFile(file, 'utf8'));
@@ -22,27 +23,31 @@ function isIgnored(pageName, patterns) {
 
 async function readFilePages(file, token, libraryKeys, ignorePatterns) {
   const pages = [];
+  const pageOfNode = new Map();
   for (const page of await listPages(file.key, token)) {
     if (isIgnored(page.name, ignorePatterns)) {
       console.log(`  Skipped page "${page.name}"`);
       continue;
     }
-    const parts = [];
-    for await (const entry of readNodes(file.key, page.nodeIds, token)) {
-      parts.push(summarizeNodes([entry.document], {
-        components: entry.components,
-        componentSets: entry.componentSets,
-        libraryKeys,
-      }));
-    }
-    pages.push({ name: page.name, summary: mergeSummaries(parts, { sameFile: true }) });
+    const target = { name: page.name, parts: [] };
+    pages.push(target);
+    for (const id of page.nodeIds) pageOfNode.set(id, target);
   }
-  return pages;
+
+  // Batching across pages keeps the request count low; Figma limits requests, not bytes.
+  for await (const entry of readNodes(file.key, [...pageOfNode.keys()], token)) {
+    pageOfNode.get(entry.document?.id)?.parts.push(summarizeNodes([entry.document], {
+      components: entry.components,
+      componentSets: entry.componentSets,
+      libraryKeys,
+    }));
+  }
+  return pages.map(({ name, parts }) => ({ name, summary: mergeSummaries(parts, { sameFile: true }) }));
 }
 
 async function main() {
   const token = process.env.FIGMA_TOKEN;
-  const config = await readJson(path.join(root, 'dashboard.config.json'));
+  const config = await readJson(configPath);
   const configuredTeams = (config.teams ?? []).filter((team) => team.files?.length);
 
   if (!token) {
