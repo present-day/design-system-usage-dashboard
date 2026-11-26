@@ -91,8 +91,11 @@ Figma limits how many file reads a token's account can make, not how many bytes 
 
 - **Full and Dev seats** get 10 to 20 requests a minute depending on the plan. Use an account with one of these seats.
 - **View and Collab seats** get about 6 requests a month, which is too few for even one run.
+- **Free (Starter) accounts** ran out after a few dozen file reads in our testing, and Figma then asked for a wait of more than four days.
 
 The collector spaces its requests to stay under the limit instead of waiting for Figma to refuse them. It defaults to 10 a minute, the lowest paid-seat limit. Set the repository variable `FIGMA_REQUESTS_PER_MINUTE` to your plan's limit to finish sooner, or to `0` to turn pacing off.
+
+If Figma still refuses a request, the collector waits as long as Figma asks, up to five minutes, and says so. When Figma asks for a longer wait, the run stops with the account's plan tier and the time it can run again, and writes no snapshot.
 
 `npm run scale-test` measures this without a Figma account. It runs the collector against a local mock of the Figma API serving five synthetic files, sized like the five busiest files in a real 174-file library rollout (23,000 instances in all). That run makes 78 requests and downloads about 128 MB, which takes about 8 minutes at 10 requests a minute. Every additional file of similar size adds requests in proportion.
 
