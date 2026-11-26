@@ -111,7 +111,14 @@
   a.bar:hover .label, a.bar:focus-visible .label { text-decoration: underline; }
   a.bar:focus-visible { outline: 2px solid var(--meter); outline-offset: 2px; }
   #detail { width: 100%; }
-  .back { color: var(--ink); font-size: 14px; align-self: flex-start; }
+  .back {
+    display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; min-height: 40px; padding: 0 16px 0 10px;
+    border: 1px solid var(--axis); background: var(--surface); color: var(--ink);
+    font-size: 14px; font-weight: 600; text-decoration: none;
+  }
+  .back svg { width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .back:hover { border-color: var(--ink2); background: var(--page); }
+  .back:focus-visible { outline: 2px solid var(--meter); outline-offset: 2px; }
   .detail-head { display: flex; flex-direction: column; gap: 4px; }
   .detail-head h2 { font-size: clamp(22px, 3vw, 30px); }
   .detail-head p { color: var(--ink2); font-size: 14px; }
@@ -629,7 +636,7 @@
       return '<div class="tile"><span class="label">' + label + '</span><span class="value">' + value + '</span><span class="delta">' + note + '</span></div>';
     };
     el('detail').innerHTML =
-      '<a class="back" href="#">← All components</a>' +
+      '<a class="back" href="#"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>All components</a>' +
       '<div class="detail-head"><h2>' + esc(component.name) + '</h2><p>Library component, as of ' + longDate(latest.date) + '</p></div>' +
       '<div class="tiles">' +
         tile('Instances', fmt(component.instances), 'across all measured files') +
