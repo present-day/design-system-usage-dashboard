@@ -107,9 +107,18 @@
   .bar .track { display: block; height: 12px; }
   .bar .fill { display: block; height: 100%; background: var(--meter); border-radius: 0 4px 4px 0; min-width: 2px; }
   .bar .v { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink2); }
-  a.bar { color: inherit; text-decoration: none; padding: 2px 0; }
-  a.bar:hover .label, a.bar:focus-visible .label { text-decoration: underline; }
-  a.bar:focus-visible { outline: 2px solid var(--meter); outline-offset: 2px; }
+  .bars:has(> a.bar) { gap: 0; }
+  a.bar {
+    grid-template-columns: 120px minmax(0, 1fr) 56px 16px; min-height: 40px; padding: 6px 10px; margin-inline: -10px;
+    color: inherit; text-decoration: none; border-bottom: 1px solid var(--grid);
+  }
+  a.bar:last-child { border-bottom: 0; }
+  a.bar .label { color: var(--ink); font-weight: 500; }
+  a.bar .go { width: 16px; height: 16px; fill: none; stroke: var(--muted); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  a.bar:hover, a.bar:focus-visible { background: var(--page); }
+  a.bar:hover .label, a.bar:focus-visible .label { text-decoration: underline; text-underline-offset: 3px; }
+  a.bar:hover .go, a.bar:focus-visible .go { stroke: var(--ink); }
+  a.bar:focus-visible { outline: 2px solid var(--meter); outline-offset: -2px; }
   #detail { width: 100%; }
   .back {
     display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; min-height: 40px; padding: 0 16px 0 10px;
@@ -132,6 +141,7 @@
     .two { grid-template-columns: minmax(0, 1fr); }
     .tile .value { font-size: 28px; }
     .bar { grid-template-columns: 92px minmax(0, 1fr) 48px; }
+    a.bar { grid-template-columns: 92px minmax(0, 1fr) 48px 16px; }
   }
 </style>
 </head>
@@ -208,7 +218,7 @@
           <div class="panel-head">
             <div>
               <h2>Most-used library components</h2>
-              <p>Instances across all measured files. Select a component for its detail.</p>
+              <p>Instances across all measured files. Select one to see its variants, teams and pages.</p>
             </div>
           </div>
           <div class="bars" id="bars"></div>
@@ -559,7 +569,8 @@
       var inner = '<span class="label">' + esc(row.label) + '</span><span class="track"><span class="fill" style="width:' +
         (row.value / top * 100).toFixed(1) + '%"></span></span><span class="v">' + fmt(row.value) + '</span>';
       return linked
-        ? '<a class="bar" href="#component/' + encodeURIComponent(row.label) + '" title="' + title + '">' + inner + '</a>'
+        ? '<a class="bar" href="#component/' + encodeURIComponent(row.label) + '" title="' + title + '">' + inner +
+          '<svg class="go" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>'
         : '<div class="bar" title="' + title + '">' + inner + '</div>';
     }).join('');
   }
