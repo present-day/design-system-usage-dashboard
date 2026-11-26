@@ -1,4 +1,5 @@
 const MAX_ATTEMPTS = 4;
+const MAX_RETRY_WAIT_SECONDS = 300;
 const NODES_PER_REQUEST = 25;
 const DEFAULT_REQUESTS_PER_MINUTE = 10;
 
@@ -20,16 +21,44 @@ async function pace() {
   if (startAt > now) await new Promise((done) => setTimeout(done, startAt - now));
 }
 
+/**
+ * Thrown when Figma asks for a wait longer than `MAX_RETRY_WAIT_SECONDS`. A Starter token can
+ * be told to wait for days, and every later request in the run would be refused too.
+ */
+export class FigmaRateLimitError extends Error {
+  name = 'FigmaRateLimitError';
+}
+
+const duration = (seconds) => {
+  if (seconds < 60) return `${Math.ceil(seconds)} second${Math.ceil(seconds) === 1 ? '' : 's'}`;
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.ceil((seconds % 3600) / 60);
+  const part = (n, unit) => (n ? `${n} ${unit}${n === 1 ? '' : 's'}` : '');
+  return [part(days, 'day'), part(hours, 'hour'), days ? '' : part(minutes, 'minute')].filter(Boolean).join(' ');
+};
+
 export async function figmaGet(path, token) {
   for (let attempt = 1; ; attempt += 1) {
     await pace();
     const response = await fetch(`${apiBase()}${path}`, { headers: { 'X-Figma-Token': token } });
     if (response.ok) return response.json();
 
-    if (response.status === 429 && attempt < MAX_ATTEMPTS) {
+    if (response.status === 429) {
       const waitSeconds = Number(response.headers.get('retry-after')) || 2 ** attempt * 5;
-      await new Promise((done) => setTimeout(done, waitSeconds * 1000));
-      continue;
+      if (waitSeconds > MAX_RETRY_WAIT_SECONDS) {
+        const until = new Date(Date.now() + waitSeconds * 1000).toISOString().slice(0, 16).replace('T', ' ');
+        const tier = response.headers.get('x-figma-plan-tier') ?? 'unknown';
+        throw new FigmaRateLimitError(
+          `Figma's rate limit for this token is used up (plan tier: ${tier}). Figma asked to wait ${duration(waitSeconds)}, until ${until} UTC, so the run stopped. ` +
+          'Run it again after that, or use a token from a Full or Dev seat on a paid plan.',
+        );
+      }
+      if (attempt < MAX_ATTEMPTS) {
+        console.warn(`  Figma rate limit reached; retrying in ${duration(waitSeconds)}.`);
+        await new Promise((done) => setTimeout(done, waitSeconds * 1000));
+        continue;
+      }
     }
     const hint = response.status === 403 ? ' (the token may have expired or lack access to this file)' : '';
     throw new Error(`Figma returned ${response.status} for ${path}${hint}`);

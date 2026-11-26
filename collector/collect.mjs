@@ -3,7 +3,7 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mergeSummaries, summarizeNodes } from './analyze.mjs';
-import { getLibraryComponents, listPages, readNodes } from './figma.mjs';
+import { FigmaRateLimitError, getLibraryComponents, listPages, readNodes } from './figma.mjs';
 import { buildSnapshot } from './snapshot.mjs';
 import { flattenTokens } from './tokens.mjs';
 
@@ -75,6 +75,7 @@ async function main() {
         files.push({ name, pages: await readFilePages(file, token, library?.keys ?? null, ignorePatterns) });
         filesRead += 1;
       } catch (error) {
+        if (error instanceof FigmaRateLimitError) throw error;
         errors.push({ team: team.id, file: name, message: error.message });
         console.error(`  Failed: ${error.message}`);
       }
