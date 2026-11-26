@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Design System Usage</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Design System Usage reads your team's Figma files every night and shows how much of the work uses your design system: token coverage, library share, raw values and unused components.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: one editorial column. Headline, then a tablet-and-phone composition, then sections that pair copy with captioned screenshots, closing on an inverted Present Day band. */
+  :root {
+    --page: #f7f7f4; --surface: #ffffff; --ink: #0b0b0b; --ink2: #4f4e4a; --muted: #75736d;
+    --line: #e1e0d9; --accent: #256abf; --accent-soft: #e8eef8;
+    --band: #0b0b0b; --band-ink: #f7f7f4; --band-ink2: #b9b7b0; --band-line: #2c2c2a;
+    --display: "Anton", "Impact", "Arial Narrow", sans-serif;
+    --body: "Inter", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0d0d0d; --surface: #161615; --ink: #f0efec; --ink2: #c3c2b7; --muted: #a09e97;
+      --line: #2c2c2a; --accent: #5598e7; --accent-soft: #16202e;
+      --band: #f0efec; --band-ink: #0b0b0b; --band-ink2: #4f4e4a; --band-line: #d6d4cc;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0d0d0d; --surface: #161615; --ink: #f0efec; --ink2: #c3c2b7; --muted: #a09e97;
+    --line: #2c2c2a; --accent: #5598e7; --accent-soft: #16202e;
+    --band: #f0efec; --band-ink: #0b0b0b; --band-ink2: #4f4e4a; --band-line: #d6d4cc;
+    color-scheme: dark;
+  }
+
+  /* Frames from @present-day/device (MIT), copied from its dist/styles.css so the page needs no build step. */
+  .pd-device {
+  container-type: inline-size;
+  display: block;
+  position: relative;
+  width: 100%;
+  max-width: var(--pd-device-max-width, none);
+}
+.pd-device-body {
+  display: block;
+  position: relative;
+  padding: calc(var(--pd-device-bezel) * 1cqi);
+  border-radius: calc(var(--pd-device-radius) * 1cqi);
+  background: var(--pd-device-color, #1c1c1e);
+  box-shadow:
+    inset 0 0 0 0.25cqi rgb(255 255 255 / 0.08),
+    0 0 0 1px var(--pd-device-edge, hsl(0 0% 50% / 0.25)),
+    var(--pd-device-shadow, 0 24px 48px -24px rgb(0 0 0 / 0.45));
+}
+.pd-device-screen {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  aspect-ratio: var(--pd-device-aspect);
+  border-radius: calc(var(--pd-device-screen-radius) * 1cqi);
+  background: var(--pd-device-screen-color, #000);
+}
+.pd-device-fill {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+img.pd-device-fill {
+  object-fit: cover;
+  object-position: top;
+}
+.pd-device-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 0;
+  transform-origin: 0 0;
+  transform: scale(var(--pd-device-scale, 1));
+}
+.pd-device-screen:not([data-scaled]) .pd-device-viewport {
+  visibility: hidden;
+}
+.pd-device[data-interactive=false] .pd-device-content {
+  pointer-events: none;
+}
+.pd-device-island {
+  position: absolute;
+  z-index: 2;
+  top: calc(var(--pd-device-island-top) * 1cqi);
+  left: 50%;
+  width: calc(var(--pd-device-island-width) * 1cqi);
+  height: calc(var(--pd-device-island-height) * 1cqi);
+  translate: -50% 0;
+  border-radius: 999px;
+  background: #000;
+  pointer-events: none;
+}
+.pd-device-button {
+  position: absolute;
+  display: block;
+  background: var(--pd-device-color, #1c1c1e);
+}
+.pd-device-button[data-side=left],
+.pd-device-button[data-side=right] {
+  top: var(--pd-device-button-start);
+  height: var(--pd-device-button-length);
+  width: calc(var(--pd-device-button-depth) * 1cqi);
+}
+.pd-device-button[data-side=left] {
+  right: 100%;
+  border-radius: 2px 0 0 2px;
+}
+.pd-device-button[data-side=right] {
+  left: 100%;
+  border-radius: 0 2px 2px 0;
+}
+.pd-device-button[data-side=top] {
+  bottom: 100%;
+  left: var(--pd-device-button-start);
+  width: var(--pd-device-button-length);
+  height: calc(var(--pd-device-button-depth) * 1cqi);
+  border-radius: 2px 2px 0 0;
+}
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink);
+    font-family: var(--body); font-size: 17px; line-height: 1.6;
+  }
+  .gutter {
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+  }
+  .col { max-width: 1120px; margin: 0 auto; }
+  .prose { max-width: 40em; }
+  h1, h2, h3, p, figure, ol, ul, dl, dd { margin: 0; }
+  a { color: inherit; }
+  a:focus-visible, .button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .display {
+    font-family: var(--display); font-weight: 400; text-transform: uppercase;
+    line-height: 0.95; letter-spacing: 0.005em; text-wrap: balance;
+  }
+  h2.display { font-size: clamp(34px, 5vw, 60px); }
+  .lede { font-size: clamp(18px, 2vw, 21px); line-height: 1.55; color: var(--ink2); text-wrap: pretty; }
+
+  .top { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: center; padding-block: 20px; }
+  .wordmark { font-weight: 600; letter-spacing: -0.01em; text-decoration: none; }
+  .top nav { display: flex; gap: 20px; font-size: 15px; }
+  .top nav a { text-decoration: none; color: var(--ink2); }
+  .top nav a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+
+  .hero { display: flex; flex-direction: column; gap: 28px; padding-block: clamp(32px, 7vw, 88px) 40px; }
+  .hero h1 { font-size: clamp(44px, 7.6vw, 104px); max-width: 13em; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; }
+  .button {
+    display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px;
+    background: var(--ink); color: var(--page); text-decoration: none; font-weight: 600; font-size: 16px;
+  }
+  .button:hover { background: var(--accent); color: #fff; }
+  .textlink { font-weight: 600; text-underline-offset: 5px; }
+
+  .stage { position: relative; padding: 8px 0 clamp(40px, 6vw, 72px); }
+  .stage .tablet { width: min(100%, 940px); }
+  .stage .phone { position: absolute; right: 0; bottom: 0; width: clamp(108px, 22%, 236px); }
+  figcaption { font-size: 14px; line-height: 1.5; color: var(--ink2); max-width: 46em; }
+  figcaption b { color: var(--ink); font-weight: 600; }
+  .stage + figcaption { margin-top: 4px; }
+
+  section { padding-block: clamp(64px, 10vw, 128px) 0; }
+  .section-head { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
+
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0; border-top: 1px solid var(--line); margin-bottom: 56px; }
+  .metric { padding: 22px 24px 24px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .metric dt { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: 0.02em; }
+  .metric dd { font-size: 16px; color: var(--ink2); }
+  .metric dd b { display: block; color: var(--ink); font-size: 19px; font-weight: 600; margin-bottom: 4px; }
+
+  .shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px 40px; }
+  .shots figure, .proof figure, .how figure { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+  .proof { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: start; }
+  .proof .copy { display: flex; flex-direction: column; gap: 20px; }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+  .stat { background: var(--surface); padding: 16px; display: flex; flex-direction: column; gap: 2px; }
+  .stat .v { font-family: var(--display); font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 14px; color: var(--ink2); line-height: 1.4; }
+
+  .how { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 56px; align-items: start; }
+  .steps { list-style: none; padding: 0; counter-reset: step; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+  .steps li { counter-increment: step; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 12px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+  .steps li::before { content: counter(step); font-family: var(--display); font-size: 28px; line-height: 1; color: var(--accent); }
+  .steps b { font-weight: 600; }
+  .steps code, .facts code { font-family: var(--mono); font-size: 0.86em; background: var(--accent-soft); padding: 1px 5px; }
+  .facts { list-style: none; padding: 0; margin-top: 36px; display: flex; flex-direction: column; gap: 14px; }
+  .facts li { padding-left: 22px; position: relative; color: var(--ink2); }
+  .facts li::before { content: ""; position: absolute; left: 0; top: 0.7em; width: 10px; height: 2px; background: var(--accent); }
+  .facts b { color: var(--ink); font-weight: 600; }
+  .how .phone { width: min(100%, 300px); margin-inline: auto; }
+
+  .studio { margin-top: clamp(80px, 12vw, 144px); background: var(--band); color: var(--band-ink); }
+  .studio .col { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 40px 64px; padding-block: clamp(56px, 8vw, 96px); align-items: end; }
+  .studio .eyebrow { color: var(--band-ink2); display: flex; align-items: center; gap: 12px; }
+  .studio .eyebrow svg { width: 34px; height: auto; color: var(--band-ink); }
+  .studio h2 { font-size: clamp(40px, 6vw, 76px); margin-top: 20px; }
+  .studio p { color: var(--band-ink2); font-size: 18px; }
+  .studio p + p { margin-top: 14px; }
+  .studio .cta { display: inline-block; margin-top: 28px; font-family: var(--display); font-size: clamp(30px, 3.6vw, 44px); text-transform: uppercase; line-height: 1; text-decoration: underline; text-underline-offset: 8px; text-decoration-thickness: 3px; }
+  .studio .cta:hover { color: var(--accent); }
+  .studio .cta:focus-visible { outline-color: var(--band-ink); }
+  footer.fine { border-top: 1px solid var(--band-line); background: var(--band); color: var(--band-ink2); font-size: 14px; }
+  footer.fine .col { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; padding-block: 22px; }
+  footer.fine a { color: var(--band-ink); }
+
+  @media (max-width: 860px) {
+    .shots, .proof, .how, .studio .col { grid-template-columns: minmax(0, 1fr); }
+    .how .phone { width: min(70%, 280px); }
+  }
+  @media (max-width: 520px) {
+    body { font-size: 16px; }
+    .stage { padding-bottom: 56px; }
+    .stage .phone { width: 30%; }
+    .stats .stat .v { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="gutter">
+  <header class="top col">
+    <a class="wordmark" href="./">Design System Usage</a>
+    <nav aria-label="Primary">
+      <a href="../">Live demo</a>
+      <a href="https://github.com/present-day/design-system-usage-dashboard">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="col">
+    <div class="hero">
+      <p class="eyebrow">For design system teams who use Figma</p>
+      <h1 class="display">Every morning, see how much of your Figma work really uses your design system</h1>
+      <p class="lede prose">Design System Usage reads your teams’ Figma files every night and publishes one page with the answer: how many values are bound to tokens, how many components come from your library, and which typed-in values to fix first. It runs on GitHub, so there is no server to keep. Free and open source.</p>
+      <div class="actions">
+        <a class="button" href="../">See the live demo</a>
+        <a class="textlink" href="https://github.com/present-day/design-system-usage-dashboard">Set it up from GitHub</a>
+      </div>
+    </div>
+
+    <div class="stage" role="group" aria-label="The dashboard on a tablet and a phone">
+      <div class="tablet"><span class="pd-device" style="--pd-device-aspect:1180 / 820;--pd-device-bezel:3.2;--pd-device-radius:4.6278;--pd-device-screen-radius:1.4278;--pd-device-button-depth:0.8"><span class="pd-device-body"><span class="pd-device-button" data-side="top" style="--pd-device-button-start:84%;--pd-device-button-length:6%"></span><span class="pd-device-screen"><img class="pd-device-fill" src="shots/t-overview.webp" alt="The dashboard overview: token coverage of 48 percent, up 18 points since September 7, with a line per team over twelve weeks" width="2360" height="1640" loading="eager" decoding="async"></span></span></span></div>
+      <div class="phone"><span class="pd-device" style="--pd-device-aspect:390 / 844;--pd-device-bezel:3.6;--pd-device-radius:14.8621;--pd-device-screen-radius:11.2621;--pd-device-button-depth:0.8;--pd-device-island-width:29.7527;--pd-device-island-height:8.7369;--pd-device-island-top:2.5975"><span class="pd-device-body"><span class="pd-device-button" data-side="left" style="--pd-device-button-start:17.5%;--pd-device-button-length:4.5%"></span><span class="pd-device-button" data-side="left" style="--pd-device-button-start:25.5%;--pd-device-button-length:8.5%"></span><span class="pd-device-button" data-side="left" style="--pd-device-button-start:36%;--pd-device-button-length:8.5%"></span><span class="pd-device-button" data-side="right" style="--pd-device-button-start:28.999999999999996%;--pd-device-button-length:14.000000000000002%"></span><span class="pd-device-screen"><img class="pd-device-fill" src="shots/p-overview.webp" alt="The same overview on a phone, with the token expiry warning at the top" width="780" height="1688" loading="eager" decoding="async"><span class="pd-device-island"></span></span></span></span></div>
+    </div>
+    <figcaption><b>Design System Usage, shown with sample data.</b> Token coverage across four teams rose from 30% to 48% in twelve weeks, and the web app pilot leads at 72%. The yellow banner says the Figma token expires in 16 days.</figcaption>
+
+    <section aria-labelledby="measures">
+      <div class="section-head">
+        <p class="eyebrow">What it measures</p>
+        <h2 class="display" id="measures">Four numbers, counted in the files themselves</h2>
+        <p class="lede prose">Figma’s library analytics counts insertions and detachments. It can’t tell you how many hex codes and pixel values people typed in by hand, or where they are. Design System Usage opens the files and counts.</p>
+      </div>
+      <dl class="metrics">
+        <div class="metric"><dt>Token coverage</dt><dd><b>How much is bound to a token</b>The share of color, spacing, radius and type values bound to a Figma variable or style, per team and over time.</dd></div>
+        <div class="metric"><dt>Library share</dt><dd><b>How much comes from the library</b>Component instances from your published library, against local copies and other libraries.</dd></div>
+        <div class="metric"><dt>Raw values</dt><dd><b>What to fix first</b>Every typed-in value, ranked by use, with the nearest token and whether it matches exactly.</dd></div>
+        <div class="metric"><dt>Unused components</dt><dd><b>What nobody uses</b>Components you published that no measured file has a single instance of.</dd></div>
+      </dl>
+      <div class="shots">
+        <figure>
+          <span class="pd-device" style="--pd-device-aspect:1180 / 820;--pd-device-bezel:3.2;--pd-device-radius:4.6278;--pd-device-screen-radius:1.4278;--pd-device-button-depth:0.8"><span class="pd-device-body"><span class="pd-device-button" data-side="top" style="--pd-device-button-start:84%;--pd-device-button-length:6%"></span><span class="pd-device-screen"><img class="pd-device-fill" src="shots/t-components.webp" alt="Team table with token coverage per team, a bar chart of the most-used library components, and four published components nobody uses" width="2360" height="1640" loading="eager" decoding="async"></span></span></span>
+          <figcaption><b>Which teams have adopted it, and which components they reach for.</b> Button leads with 1,210 instances. Breadcrumb, Data table, Date range picker and Stepper were published and never used.</figcaption>
+        </figure>
+        <figure>
+          <span class="pd-device" style="--pd-device-aspect:1180 / 820;--pd-device-bezel:3.2;--pd-device-radius:4.6278;--pd-device-screen-radius:1.4278;--pd-device-button-depth:0.8"><span class="pd-device-body"><span class="pd-device-button" data-side="top" style="--pd-device-button-start:84%;--pd-device-button-length:6%"></span><span class="pd-device-screen"><img class="pd-device-fill" src="shots/t-raw.webp" alt="Pages ranked by raw values, with token coverage per page" width="2360" height="1640" loading="eager" decoding="async"></span></span></span>
+          <figcaption><b>Where the cleanup work is, page by page.</b> The pages with the most typed-in values come first, so a team knows where an hour of cleanup does the most.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="proof">
+      <div class="proof">
+        <div class="copy">
+          <p class="eyebrow">A real file</p>
+          <h2 class="display" id="proof">We ran it on Google’s Material 3 Design Kit</h2>
+          <p>We copied the public Material 3 Design Kit from Figma Community into a free Figma account and ran one collection. It read 30 pages in 32 seconds.</p>
+          <p>The most common raw value was 16px of spacing, typed in 3,869 times. The next four were spacing too. The kit has variables for color, type scale, font and shape, and none for spacing, so there was nothing to bind them to. That is the kind of gap the dashboard is built to show.</p>
+          <div class="stats">
+            <div class="stat"><span class="v">37%</span><span class="l">of 43,153 values bound to variables</span></div>
+            <div class="stat"><span class="v">3,869</span><span class="l">uses of 16px spacing, typed in</span></div>
+            <div class="stat"><span class="v">30</span><span class="l">pages read</span></div>
+            <div class="stat"><span class="v">32s</span><span class="l">for the whole run</span></div>
+          </div>
+        </div>
+        <figure>
+          <span class="pd-device" style="--pd-device-aspect:1180 / 820;--pd-device-bezel:3.2;--pd-device-radius:4.6278;--pd-device-screen-radius:1.4278;--pd-device-button-depth:0.8"><span class="pd-device-body"><span class="pd-device-button" data-side="top" style="--pd-device-button-start:84%;--pd-device-button-length:6%"></span><span class="pd-device-screen"><img class="pd-device-fill" src="shots/t-live-raw.webp" alt="The most common raw values in the Material 3 kit, led by 16px, 10px, 8px, 4px and 12px of spacing" width="2360" height="1640" loading="eager" decoding="async"></span></span></span>
+          <figcaption><b>Design System Usage on the Material 3 Design Kit, November 25, 2026.</b> Spacing fills the top of the list because the kit has no spacing variables. Add a tokens file and each row shows its nearest token.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="how">
+      <div class="how">
+        <div>
+          <div class="section-head">
+            <p class="eyebrow">How it works</p>
+            <h2 class="display" id="how">Runs on GitHub. Nothing to host.</h2>
+          </div>
+          <ol class="steps">
+            <li><span><b>Create a Figma access token</b> with read access to file content and library content, and add it to the repository as the secret <code>FIGMA_TOKEN</code>.</span></li>
+            <li><span><b>List your files</b> in <code>dashboard.config.json</code>: the library file, and each team’s files.</span></li>
+            <li><span><b>Every night at 06:00 UTC</b>, a GitHub Action reads the files and commits a snapshot to the repository.</span></li>
+            <li><span><b>GitHub Pages publishes the dashboard.</b> Send the link to anyone who asks how adoption is going.</span></li>
+          </ol>
+          <ul class="facts">
+            <li><b>Your designs stay in Figma.</b> Snapshots keep counts, component names and raw values such as <code>#1A4B8C</code>, never frames, text or images.</li>
+            <li><b>Paced for Figma’s rate limits.</b> In a scale test, five large files with 18,960 instances took 78 requests: about eight minutes at 10 requests a minute.</li>
+            <li><b>Warns before the token runs out.</b> A banner shows the days left and turns yellow three weeks before.</li>
+            <li><b>On Figma Enterprise?</b> Import a Library Analytics export for weekly history of insertions, detachments and token use.</li>
+            <li><b>No dependencies to install.</b> Plain Node.js and one HTML page, under the MIT license.</li>
+          </ul>
+        </div>
+        <figure class="phone">
+          <span class="pd-device" style="--pd-device-aspect:390 / 844;--pd-device-bezel:3.6;--pd-device-radius:14.8621;--pd-device-screen-radius:11.2621;--pd-device-button-depth:0.8;--pd-device-island-width:29.7527;--pd-device-island-height:8.7369;--pd-device-island-top:2.5975"><span class="pd-device-body"><span class="pd-device-button" data-side="left" style="--pd-device-button-start:17.5%;--pd-device-button-length:4.5%"></span><span class="pd-device-button" data-side="left" style="--pd-device-button-start:25.5%;--pd-device-button-length:8.5%"></span><span class="pd-device-button" data-side="left" style="--pd-device-button-start:36%;--pd-device-button-length:8.5%"></span><span class="pd-device-button" data-side="right" style="--pd-device-button-start:28.999999999999996%;--pd-device-button-length:14.000000000000002%"></span><span class="pd-device-screen"><img class="pd-device-fill" src="shots/p-detail.webp" alt="The Button component page: 1,210 instances, 28 percent of library instances, 13 percent restyled, used by 4 of 4 teams" width="780" height="1688" loading="eager" decoding="async"><span class="pd-device-island"></span></span></span></span>
+          <figcaption><b>Every component gets a page.</b> Button: 1,210 instances, used by all four teams, 13% restyled with a visual override.</figcaption>
+        </figure>
+      </div>
+    </section>
+  </main>
+</div>
+
+<aside class="studio gutter" aria-labelledby="studio">
+  <div class="col">
+    <div>
+      <p class="eyebrow"><svg viewBox="55.23 23.9457 189.54 152.108" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M181.164 23.9457C200.84 23.9457 216.36 29.7038 227.724 41.2201C239.088 52.7364 244.77 68.0664 244.77 87.2094C244.77 105.361 239.126 119.966 227.838 131.025C216.627 142.083 201.636 147.613 181.506 147.613H114.146V147.721H55.23V23.9457H181.164ZM114.146 102.538H173.384C177.96 102.538 181.659 101.28 184.481 98.7631C187.379 96.17 188.829 92.7001 188.829 88.3529C188.829 83.9295 187.379 80.4595 184.481 77.9427C181.583 75.4259 177.884 74.1674 173.384 74.1674H114.146V102.538Z" fill="currentColor"/><path d="M67.2213 149.543V176.054H55.2311V147.706H55.8053L67.2213 149.543ZM82.8541 152.059V176.054H70.8639V150.13L82.8541 152.059ZM98.4879 154.576V176.054H86.4967V152.646L98.4879 154.576ZM114.121 157.093V176.054H102.13V155.163L114.121 157.093Z" fill="currentColor"/></svg>Built by Present Day</p>
+      <h2 class="display" id="studio">Want it running on your design system?</h2>
+    </div>
+    <div>
+      <p>Present Day is a small studio in New York that handles the strategy, the design and the code. We built this dashboard for a design system rollout across 174 files.</p>
+      <p>We can set it up on your library, dress it in your type and colors, or help with the system it measures. The first consultation is free.</p>
+      <a class="cta" href="https://present.day/start/?from=design-system-usage">Start a project</a>
+    </div>
+  </div>
+</aside>
+<footer class="fine gutter">
+  <div class="col">
+    <span>Design System Usage is open source under the MIT license. Team names and numbers in the sample screenshots are invented.</span>
+    <span><a href="https://present.day">present.day</a></span>
+  </div>
+</footer>
+</body>
+</html>
